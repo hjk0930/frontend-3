@@ -1,7 +1,6 @@
-# frontend-3
-# 🚀 프로젝트 명 (서비스 이름을 적어주세요)
+# 🚀 프로젝트 명 MATCH.GG
 
-> **"여기에 서비스를 매력적으로 표현하는 한 줄 소개를 적어주세요."**
+> 라면 물 끓기도 전에 만들어지는 팀 밸런스
 
 ---
 
@@ -39,10 +38,10 @@
 * **리뷰 룰:** <code>main</code> 브랜치 병합 전 최소 1명 이상 승인 필요
 
 ### 👥 팀원 역할
-* **PM (Product Manager):** [이름]
-* **Tech Lead:** [이름]
-* **UI/UX Designer:** [이름]
-* **QA Engineer:** [이름]
-* **Scrum Master:** [이름]
-* **Tech Writer:** [이름]
-* **DevRel (Presenter):** [이름]
+* **PM (Product Manager):** [홍준기]
+* **Tech Lead:** [조성윤]
+* **UI/UX Designer:** [김민혁]
+* **QA Engineer:** [이서호]
+* **Scrum Master:** [김시우]
+* **Tech Writer:** [김해아]
+* **DevRel (Presenter):** [홍준기]
