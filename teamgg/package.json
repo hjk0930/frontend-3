@@ -1,0 +1,14 @@
+{
+  "name": "team-gg",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "5.2.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

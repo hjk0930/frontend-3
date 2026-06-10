@@ -1,0 +1,5035 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>LOL 내전 통합 생성기</title>
+  <style>
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      transition: background 0.25s ease, color 0.25s ease;
+      --bg-main: #0b1020;
+      --panel-bg: #151c31;
+      --panel-soft: #0e1426;
+      --border-main: #2b3558;
+      --border-soft: #303b61;
+      --accent: #d4af37;
+      --accent-strong: #f1c84d;
+      --text-main: #f5f5f5;
+      --text-muted: #b8c0dc;
+      --glow: rgba(212,175,55,0.30);
+      --card-top: #222b49;
+      --card-bottom: #11182b;
+      --blue-team: #123b73;
+      --red-team: #731f35;
+    }
+    body.mode-classic {
+      --bg-main: #0b1020;
+      --panel-bg: #151c31;
+      --panel-soft: #0e1426;
+      --border-main: #2b3558;
+      --border-soft: #303b61;
+      --accent: #d4af37;
+      --accent-strong: #f1c84d;
+      --text-main: #f5f5f5;
+      --text-muted: #b8c0dc;
+      --glow: rgba(212,175,55,0.30);
+      --card-top: #222b49;
+      --card-bottom: #11182b;
+    }
+    body.mode-aram {
+      --bg-main: #0b1324;
+      --panel-bg: #131e32;
+      --panel-soft: #0d1728;
+      --border-main: #273653;
+      --border-soft: #334765;
+      --accent: #7fb3d5;
+      --accent-strong: #a9cfe8;
+      --text-main: #f2f8fc;
+      --text-muted: #b9cadd;
+      --glow: rgba(127,179,213,0.20);
+      --card-top: #1c2e45;
+      --card-bottom: #0d1728;
+    }
+    body.mode-arena {
+      --bg-main: #0b1020;
+      --panel-bg: #151c31;
+      --panel-soft: #0e1426;
+      --border-main: #2b3558;
+      --border-soft: #303b61;
+      --accent: #d4af37;
+      --accent-strong: #f1c84d;
+      --text-main: #f5f5f5;
+      --text-muted: #b8c0dc;
+      --glow: rgba(212,175,55,0.30);
+      --card-top: #222b49;
+      --card-bottom: #11182b;
+    }
+    .container { max-width: 1720px; width: min(1720px, 96vw); margin: 40px auto; padding: 20px; }
+    h1 { text-align: center; color: var(--accent); margin-bottom: 20px; letter-spacing: 1px; }
+    .mode-selection {
+      display: flex; justify-content: center; gap: 15px; margin-bottom: 26px;
+      background: var(--panel-bg); padding: 14px; border-radius: 18px;
+      border: 1px solid var(--border-main); box-shadow: 0 10px 30px rgba(0,0,0,0.22);
+      flex-wrap: wrap;
+    }
+    .mode-btn {
+      background: var(--panel-soft); color: var(--text-muted); border: 2px solid var(--border-soft);
+      padding: 12px 26px; font-size: 15px; font-weight: bold; border-radius: 13px;
+      cursor: pointer; transition: all 0.22s ease; min-width: 170px;
+    }
+    .mode-btn:hover { border-color: var(--accent); color: var(--text-main); transform: translateY(-1px); }
+    .mode-btn.active { background: var(--accent); color: #08100c; border-color: var(--accent); box-shadow: 0 0 16px var(--glow); }
+    .tab-menu { display: flex; justify-content: center; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; }
+    .tab-btn {
+      background: var(--panel-bg); color: var(--text-muted); border: 1px solid var(--border-main);
+      padding: 14px 20px; font-size: 15px; font-weight: bold; border-radius: 12px;
+      cursor: pointer; transition: 0.2s ease;
+    }
+    .tab-btn:hover { background: var(--card-top); color: var(--text-main); }
+    .tab-btn.active { background: var(--accent); color: #09110d; border-color: var(--accent); box-shadow: 0 4px 15px var(--glow); }
+    .section {
+      display: none; background: var(--panel-bg); border: 1px solid var(--border-main);
+      border-radius: 18px; padding: 22px; margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+    }
+    .section.active { display: block; }
+    .section h2 { margin-top: 0; color: var(--accent); border-bottom: 1px solid var(--border-main); padding-bottom: 10px; font-size: 20px; }
+    .mode-hint {
+      margin: 0 0 18px; color: var(--text-muted); background: var(--panel-soft);
+      border: 1px dashed var(--border-soft); padding: 12px 14px; border-radius: 12px; line-height: 1.55;
+    }
+    .mode-hint:empty { display: none !important; }
+    .direct-grid, .nickname-db-grid {
+      display: grid; grid-template-columns: 1.2fr 1.25fr 1fr 1.35fr auto; gap: 10px; align-items: start;
+    }
+    .nickname-db-grid { grid-template-columns: 1.7fr auto; margin-top: 12px; }
+    input, select, textarea, button { border: none; border-radius: 10px; padding: 11px; font-size: 14px; }
+    input, select, textarea { background: var(--panel-soft); color: var(--text-main); border: 1px solid var(--border-soft); }
+    input:disabled, select:disabled { background: rgba(255,255,255,0.06); color: var(--text-muted); cursor: not-allowed; }
+    textarea { width: 100%; min-height: 140px; resize: vertical; line-height: 1.5; }
+    button { background: var(--accent); color: #08100c; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.18s ease; }
+    button:hover { background: var(--accent-strong); transform: translateY(-1px); }
+    .sub-button { background: var(--border-soft); color: var(--text-main); }
+    .sub-button:hover { background: var(--card-top); }
+    .help { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-top: 12px; }
+    .saved-player-panel { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border-main); }
+    .saved-player-panel h3 { margin: 0 0 12px; color: var(--accent); font-size: 18px; }
+    .champion-search-box, .nickname-search-box { position: relative; width: 100%; }
+    .champion-search-box input, .nickname-search-box input { width: 100%; }
+    .champion-dropdown, .nickname-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      max-height: 280px;
+      overflow-y: auto;
+      background: var(--panel-soft);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      z-index: 300;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.42);
+      padding: 6px 0;
+    }
+    .champion-option, .nickname-option {
+      padding: 10px 12px;
+      cursor: pointer;
+      color: var(--text-main);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      line-height: 1.35;
+    }
+    .champion-option:last-child, .nickname-option:last-child { border-bottom: none; }
+    .champion-option:hover, .nickname-option:hover { background: var(--card-top); }
+
+    .tier-select-box {
+      position: relative;
+      width: 100%;
+    }
+    .tier-select-box::after {
+      content: "⌄";
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-54%);
+      color: var(--text-main);
+      font-size: 18px;
+      font-weight: bold;
+      pointer-events: none;
+      opacity: 0.95;
+    }
+    .tier-select-box input {
+      width: 100%;
+      cursor: pointer;
+      color: var(--text-main);
+      font-weight: bold;
+      padding-right: 38px;
+      caret-color: transparent;
+    }
+    .tier-select-box input::placeholder {
+      color: var(--text-main);
+      opacity: 0.95;
+      font-weight: bold;
+    }
+    .tier-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      max-height: 240px;
+      overflow-y: auto;
+      background: var(--panel-soft);
+      border: 1px solid var(--border-soft);
+      border-radius: 10px;
+      z-index: 120;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.38);
+      padding: 6px 0;
+    }
+    .tier-option {
+      padding: 9px 12px;
+      cursor: pointer;
+      color: var(--text-main);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 14px;
+      background: transparent;
+      font-weight: bold;
+    }
+    .tier-option:last-child { border-bottom: none; }
+    .tier-option:hover {
+      background: var(--card-top);
+      color: #ffffff;
+    }
+    .nickname-option strong { color: var(--accent-strong); }
+    .nickname-option .db-meta { display: block; margin-top: 4px; font-size: 12px; color: var(--text-muted); }
+    .no-result { padding: 10px 12px; color: var(--text-muted); }
+    .player-count, .db-count { text-align: center; color: var(--text-muted); margin: 12px 0 16px; font-size: 16px; }
+    .card-list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+    .player-card { background: linear-gradient(180deg, var(--card-top), var(--card-bottom)); border: 1px solid var(--border-soft); border-radius: 18px; padding: 14px; text-align: center; overflow: hidden; min-width: 0; }
+    .champion-img { width: 92px; height: 92px; object-fit: cover; border-radius: 50%; border: 3px solid var(--accent); background: var(--panel-soft); margin-bottom: 10px; }
+    .nickname { font-size: 17px; font-weight: bold; margin-bottom: 8px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tags { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .tag { padding: 5px 9px; border-radius: 999px; font-size: 12px; font-weight: bold; background: var(--border-soft); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tier { background: #6f5cff; color: white; }
+    .line { background: var(--accent); color: #09110d; }
+    .champion { background: #9b3e3a; color: white; }
+    .score { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+    .remove-btn { margin-top: 10px; width: 100%; background: var(--border-soft); color: var(--text-main); }
+    .action-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .match-container { background: var(--panel-soft); border: 2px solid var(--border-main); border-radius: 20px; padding: 30px; margin-top: 20px; overflow-x: auto; overflow-y: visible; }
+    .team-area { display: grid; grid-template-columns: repeat(2, minmax(780px, 1fr)); gap: 28px; margin-top: 22px; align-items: start; }
+    .team { border-radius: 18px; padding: 24px; border: 1px solid var(--border-soft); box-shadow: 0 8px 24px rgba(0,0,0,0.3); min-width: 0; overflow: visible; }
+    .blue { background: linear-gradient(180deg, rgba(25,87,128,0.7), var(--card-bottom)); border-color: #5ca6d6; }
+    .red { background: linear-gradient(180deg, rgba(123,45,58,0.7), var(--card-bottom)); border-color: #d3788c; }
+    .team h3 { margin-top: 0; text-align: center; font-size: 28px; letter-spacing: 1px; }
+    .blue h3 { color: #8bd0ff; } .red h3 { color: #ff9aad; }
+    .team-table { margin-top: 15px; border-radius: 12px; overflow: visible; }
+    .team-table-inner { min-width: 760px; }
+    .team-header, .team-player { display: grid; grid-template-columns: 54px minmax(220px, 1.45fr) minmax(170px, 1.1fr) minmax(118px, 0.75fr) minmax(140px, 0.95fr) 70px; align-items: center; text-align: left; column-gap: 10px; }
+    .team-header.no-champion, .team-player.no-champion { grid-template-columns: minmax(360px, 2fr) minmax(210px, 1.2fr) 80px; }
+    .team-header { color: var(--accent-strong); background: rgba(0,0,0,0.4); font-weight: bold; font-size: 14px; }
+    .team-header span, .team-player span { padding: 12px 8px; min-width: 0; overflow: visible; text-overflow: clip; white-space: nowrap; word-break: normal; overflow-wrap: normal; line-height: 1.35; }
+    .team-player .name { font-weight: bold; color: #ffffff; }
+    .inline-edit { position: relative; width: 100%; min-width: 0; z-index: 2; }
+    .team-player:has(.inline-edit.open) { z-index: 50; }
+    .inline-edit-button {
+      width: 100%; min-width: 0; background: rgba(0,0,0,0.18); color: var(--text-main);
+      border: 1px solid var(--border-soft); border-radius: 8px; padding: 7px 28px 7px 9px;
+      font-size: 13px; font-weight: bold; text-align: left; cursor: pointer; position: relative;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25; min-height: 34px;
+    }
+    .inline-edit-button::after { content: "⌄"; position: absolute; right: 9px; top: 50%; transform: translateY(-52%); color: var(--text-main); font-size: 15px; }
+    .inline-edit-button.placeholder { color: var(--text-muted); }
+    .inline-dropdown {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      max-height: 230px; overflow-y: auto; background: #0e1426; border: 1px solid var(--border-soft);
+      border-radius: 9px; z-index: 9999; box-shadow: 0 12px 28px rgba(0,0,0,0.45); padding: 5px 0;
+    }
+    .inline-edit.open .inline-dropdown { display: block; }
+    .inline-option { padding: 8px 10px; color: #ffffff; font-size: 13px; font-weight: bold; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .inline-option:last-child { border-bottom: none; }
+    .inline-option:hover { background: var(--card-top); }
+    .team-pick-slot { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--accent); background: var(--panel-soft); justify-self: center; display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--text-muted); font-size: 11px; flex-shrink: 0; }
+    .team-champion-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .team-zone { min-height: 230px; border-radius: 0 0 12px 12px; transition: 0.15s; }
+    .team-zone.over { background: rgba(255,255,255,0.05); outline: 2px dashed var(--accent); outline-offset: -2px; }
+    .team-player { position: relative; background: rgba(0,0,0,0.16); border-bottom: 1px solid rgba(255,255,255,0.08); cursor: grab; font-size: 14px; transition: 0.15s; min-height: 62px; }
+    .team-player:hover { background: rgba(255,255,255,0.06); }
+    .team-player.dragging { opacity: 0.35; transform: scale(0.98); }
+    .team-player.before::before, .team-player.after::after { content: ""; position: absolute; left: 8px; right: 8px; height: 4px; background: var(--accent-strong); border-radius: 999px; box-shadow: 0 0 14px var(--glow); z-index: 5; }
+    .team-player.before::before { top: -2px; } .team-player.after::after { bottom: -2px; }
+    .team-player .champ-name { color: var(--accent-strong); }
+    .team-player .score-value { color: var(--text-muted); }
+    .team-summary { text-align: center; margin-top: 18px; color: var(--text-main); font-size: 16px; font-weight: bold; line-height: 1.7; }
+    .difference-box { text-align: center; background: var(--panel-bg); border: 2px dashed var(--accent); border-radius: 14px; padding: 16px; margin-top: 24px; color: var(--accent-strong); font-size: 18px; font-weight: bold; }
+    .drag-guide, .empty-message { text-align: center; color: var(--text-muted); font-size: 14px; margin-top: 12px; line-height: 1.6; }
+    .empty-message { padding: 50px; font-size: 16px; }
+    .arena-grid-6 { display: grid; grid-template-columns: repeat(2, minmax(540px, 1fr)); gap: 18px; margin-top: 20px; }
+    .arena-team-box { border-radius: 16px; padding: 18px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, var(--card-top), var(--card-bottom)); box-shadow: 0 6px 18px rgba(0,0,0,0.25); min-width: 0; }
+    .arena-team-box h3 { margin-top: 0; text-align: center; font-size: 18px; color: var(--accent-strong); margin-bottom: 12px; border-bottom: 1px solid var(--border-soft); padding-bottom: 8px; }
+    .arena-mem { display: grid; grid-template-columns: 56px minmax(280px, 1fr) 84px; align-items: center; gap: 12px; background: rgba(0,0,0,0.25); padding: 12px; border-radius: 12px; margin-bottom: 10px; font-size: 14px; min-width: 0; min-height: 76px; }
+    .arena-pick-slot { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--accent); background: var(--panel-soft); display: flex; align-items: center; justify-content: center; overflow: hidden; color: var(--text-muted); font-size: 11px; flex-shrink: 0; }
+    .arena-champion-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .arena-profile-info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+    .arena-mem .a-name { font-weight: bold; color: #fff; overflow: visible; text-overflow: clip; white-space: nowrap; word-break: normal; overflow-wrap: normal; line-height: 1.3; }
+    .arena-mem .a-tier { color: var(--text-muted); font-size: 12px; overflow: visible; text-overflow: clip; white-space: nowrap; word-break: normal; overflow-wrap: normal; line-height: 1.35; }
+    .arena-mem .a-score { color: var(--accent-strong); font-weight: bold; white-space: nowrap; }
+    .arena-inline-tier { margin-top: 4px; width: 100%; max-width: 190px; }
+    .arena-team-score { text-align: right; font-size: 14px; color: var(--text-muted); font-weight: bold; margin-top: 10px; }
+/* 밴픽 전용 스타일 (plbanpick.com 스타일 레이아웃) */
+    .draft-container {
+      background: #070b14;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #1a253f;
+    }
+    .draft-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0e1426;
+      padding: 15px 25px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #233056;
+    }
+    .draft-phase {
+      font-size: 20px;
+      font-weight: bold;
+      color: #d4af37;
+      text-shadow: 0 0 10px rgba(212,175,55,0.4);
+    }
+    .draft-status-text {
+      font-size: 15px;
+      color: #b8c0dc;
+    }
+    .draft-controls-row {
+      display: flex;
+      gap: 10px;
+    }
+    .draft-board {
+      display: grid;
+      grid-template-columns: 240px 1fr 240px;
+      gap: 20px;
+    }
+    .draft-side {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .draft-side h3 {
+      margin: 0;
+      font-size: 24px;
+      text-align: center;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+    .draft-side.blue h3 { color: #3897ff; text-shadow: 0 0 8px rgba(56,151,255,0.4); }
+    .draft-side.red h3 { color: #ff4769; text-shadow: 0 0 8px rgba(255,71,105,0.4); }
+    
+    .ban-row-wrapper {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+      padding: 8px;
+      border-radius: 8px;
+    }
+    .ban-slot-new {
+      width: 42px;
+      height: 42px;
+      background: #111728;
+      border: 2px solid #222f54;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .ban-slot-new.active {
+      border-color: #ffaa00;
+      box-shadow: 0 0 10px #ffaa00;
+      animation: pulse 1.5s infinite;
+    }
+    .ban-slot-new img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(100%) contrast(1.2);
+    }
+    .ban-slot-new .ban-x-overlay {
+      position: absolute;
+      font-size: 24px;
+      color: #ff3355;
+      font-weight: bold;
+      text-shadow: 0 0 5px black;
+      pointer-events: none;
+    }
+    .ban-slot-new .slot-num {
+      position: absolute;
+      font-size: 10px;
+      color: #55648c;
+      bottom: 2px;
+      right: 3px;
+    }
+
+    .pick-list-new {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pick-slot-new {
+      height: 72px;
+      background: linear-gradient(90deg, #12192c, #0b1020);
+      border: 2px solid #222f54;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      gap: 15px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .draft-side.red .pick-slot-new {
+      flex-direction: row-reverse;
+      background: linear-gradient(270deg, #1c1424, #0b1020);
+    }
+    .pick-slot-new.active {
+      border-color: #d4af37;
+      box-shadow: 0 0 15px rgba(212,175,55,0.6);
+      animation: pulse 1.5s infinite;
+    }
+    .pick-slot-new .slot-img-box {
+      width: 54px;
+      height: 54px;
+      border-radius: 8px;
+      background: #070b14;
+      border: 1px solid #314270;
+      overflow: hidden;
+    }
+    .pick-slot-new .slot-img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .pick-slot-new .slot-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .draft-side.red .pick-slot-new .slot-info {
+      text-align: right;
+    }
+    .pick-slot-new .lane-title {
+      font-size: 11px;
+      color: #7282a8;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .pick-slot-new .champ-name-display {
+      font-size: 16px;
+      font-weight: bold;
+      color: #ffffff;
+      margin-top: 2px;
+    }
+
+    .draft-center-area {
+      background: #0e1426;
+      border: 1px solid #233056;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .draft-search-row {
+      display: flex;
+      gap: 10px;
+    }
+    .draft-search-row input {
+      flex: 1;
+      background: #070b14;
+    }
+    .champ-grid-new {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+      gap: 8px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .champ-tile-new {
+      background: #161f38;
+      border: 1px solid #2c3b66;
+      border-radius: 8px;
+      padding: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .champ-tile-new:hover {
+      border-color: #d4af37;
+      transform: translateY(-2px);
+      background: #1f2b4d;
+    }
+    .champ-tile-new img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 6px;
+      background: #070b14;
+    }
+    .champ-tile-new .tile-name {
+      font-size: 11px;
+      color: #b8c0dc;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .champ-tile-new.disabled {
+      opacity: 0.25;
+      pointer-events: none;
+      filter: grayscale(100%);
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.8; }
+      50% { opacity: 1; border-color: rgba(212,175,55,1); }
+      100% { opacity: 0.8; }
+    }
+
+
+    /* 밴픽 반응형 보정 */
+    @media (max-width: 1200px) {
+      .draft-board { grid-template-columns: 210px 1fr 210px; gap: 14px; }
+      .champ-grid-new { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); }
+    }
+    @media (max-width: 900px) {
+      .draft-board { grid-template-columns: 1fr; }
+      .draft-top { flex-direction: column; gap: 12px; align-items: stretch; }
+      .draft-controls-row { justify-content: center; flex-wrap: wrap; }
+    }
+    .fun-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 15px; }
+    .fun-btn { background: linear-gradient(135deg, var(--card-top), var(--panel-soft)); border: 1px solid var(--border-soft); border-radius: 16px; padding: 20px 15px; font-size: 15px; font-weight: bold; color: var(--text-muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    .fun-btn .icon { font-size: 24px; transition: transform 0.2s ease; }
+    .fun-btn:hover { border-color: var(--accent); color: var(--text-main); transform: translateY(-3px); box-shadow: 0 6px 15px var(--glow); }
+    .fun-btn:hover .icon { transform: scale(1.15); }
+    .fun-box { background: radial-gradient(circle at center, var(--card-top) 0%, var(--panel-soft) 100%); border: 1px solid var(--border-soft); border-radius: 16px; padding: 24px; margin-top: 24px; min-height: 110px; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--accent-strong); font-size: 16px; font-weight: bold; line-height: 1.6; box-shadow: inset 0 0 15px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.15); }
+    @media (max-width: 1650px) { .team-area { grid-template-columns: 1fr; } }
+    @media (max-width: 1000px) { .direct-grid, .nickname-db-grid { grid-template-columns: 1fr; } .card-list { grid-template-columns: repeat(2, 1fr); } .pre-ban-grid { grid-template-columns: 1fr; } .arena-grid-6 { grid-template-columns: 1fr; } .fun-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 650px) { .card-list, .arena-grid-6, .fun-grid { grid-template-columns: 1fr; } .team-header, .team-player, .team-header.no-champion, .team-player.no-champion { grid-template-columns: 1fr; text-align: center; } .team-header span { display: none; } .team-player span { padding: 7px; } .team-champion-img { justify-self: center; } }
+
+    /* v4 layout safety: 이미지가 없어도 이름 칸이 픽 칸으로 밀리지 않게 고정 */
+    .team-pick-slot, .arena-pick-slot { box-sizing: border-box; }
+    .team-player .name, .arena-profile-info { min-width: 0; }
+    .team-player .name { white-space: nowrap !important; word-break: normal !important; overflow-wrap: normal !important; }
+    .arena-mem .a-name, .arena-mem .a-tier { white-space: nowrap !important; word-break: normal !important; overflow-wrap: normal !important; }
+
+
+    /* ===== FINAL FIX: 내전표 레이아웃 안정화 =====
+       - 가로 스크롤 제거
+       - 닉네임/티어가 옆 칸을 침범하지 않게 고정
+       - 긴 닉네임은 칸 안에서 자연스럽게 줄바꿈
+       - 이미지가 없더라도 픽 칸은 유지
+    */
+    .match-container {
+      overflow-x: visible !important;
+      overflow-y: visible !important;
+      padding: 28px !important;
+    }
+    .team-area {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 28px !important;
+      width: 100% !important;
+    }
+    .team {
+      min-width: 0 !important;
+      overflow: visible !important;
+      padding: 22px !important;
+    }
+    .team-table {
+      width: 100% !important;
+      overflow: visible !important;
+    }
+    .team-table-inner {
+      width: 100% !important;
+      min-width: 0 !important;
+      overflow: visible !important;
+    }
+    .team-header,
+    .team-player {
+      width: 100% !important;
+      grid-template-columns: 52px minmax(190px, 2.1fr) minmax(146px, 1.25fr) minmax(92px, 0.78fr) minmax(110px, 0.95fr) 54px !important;
+      column-gap: 8px !important;
+      align-items: center !important;
+    }
+    .team-header.no-champion,
+    .team-player.no-champion {
+      grid-template-columns: minmax(220px, 2fr) minmax(150px, 1.15fr) 58px !important;
+    }
+    .team-header span,
+    .team-player span {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      overflow: hidden !important;
+      text-overflow: clip !important;
+      white-space: normal !important;
+      word-break: keep-all !important;
+      overflow-wrap: anywhere !important;
+      line-height: 1.28 !important;
+      padding: 10px 6px !important;
+    }
+    .team-player .name {
+      white-space: normal !important;
+      word-break: keep-all !important;
+      overflow-wrap: anywhere !important;
+      line-height: 1.25 !important;
+      font-size: 14px !important;
+    }
+    .team-player .champ-name,
+    .team-player .score-value {
+      white-space: normal !important;
+      overflow-wrap: anywhere !important;
+    }
+    .team-pick-slot {
+      width: 38px !important;
+      height: 38px !important;
+      min-width: 38px !important;
+      justify-self: center !important;
+    }
+    .inline-edit-button {
+      white-space: normal !important;
+      line-height: 1.2 !important;
+      min-height: 34px !important;
+      overflow: hidden !important;
+      overflow-wrap: anywhere !important;
+      word-break: keep-all !important;
+    }
+    .inline-dropdown {
+      min-width: max(100%, 170px) !important;
+    }
+    .arena-grid-6 {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      width: 100% !important;
+    }
+    .arena-team-box {
+      min-width: 0 !important;
+      overflow: visible !important;
+    }
+    .arena-mem {
+      grid-template-columns: 52px minmax(0, 1fr) 62px !important;
+      gap: 10px !important;
+      min-width: 0 !important;
+      align-items: center !important;
+    }
+    .arena-profile-info,
+    .arena-mem .a-name,
+    .arena-mem .a-tier {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      white-space: normal !important;
+      word-break: keep-all !important;
+      overflow-wrap: anywhere !important;
+      overflow: hidden !important;
+      line-height: 1.25 !important;
+    }
+    .arena-pick-slot {
+      width: 46px !important;
+      height: 46px !important;
+      min-width: 46px !important;
+    }
+    .arena-mem .a-score {
+      white-space: nowrap !important;
+      text-align: right !important;
+    }
+    @media (max-width: 1350px) {
+      .team-area { grid-template-columns: 1fr !important; }
+    }
+    @media (max-width: 900px) {
+      .team-header,
+      .team-player {
+        grid-template-columns: 44px minmax(120px, 1.7fr) minmax(120px, 1.2fr) minmax(86px, 0.8fr) minmax(90px, 0.9fr) 46px !important;
+        font-size: 13px !important;
+      }
+      .team-header.no-champion,
+      .team-player.no-champion {
+        grid-template-columns: minmax(160px, 1.8fr) minmax(120px, 1.1fr) 52px !important;
+      }
+      .team-pick-slot { width: 34px !important; height: 34px !important; min-width: 34px !important; }
+      .arena-grid-6 { grid-template-columns: 1fr !important; }
+    }
+
+
+    /* v6 fix: 내전표 안 티어/라인 드롭다운이 행 뒤로 숨거나 잘리지 않게 처리 */
+    .team-player,
+    .team-header,
+    .team-zone,
+    .team-table,
+    .team-table-inner,
+    .team,
+    .team-area,
+    .match-container {
+      overflow: visible !important;
+    }
+
+    .team-player {
+      position: relative !important;
+      z-index: 1;
+    }
+
+    .team-player:has(.inline-edit.open) {
+      z-index: 9999 !important;
+    }
+
+    .team-player span:has(.inline-edit) {
+      overflow: visible !important;
+      position: relative !important;
+      z-index: 20 !important;
+    }
+
+    .inline-edit {
+      position: relative !important;
+      z-index: 30 !important;
+    }
+
+    .inline-edit.open {
+      z-index: 10000 !important;
+    }
+
+    .inline-dropdown {
+      z-index: 10001 !important;
+      overflow-y: auto !important;
+    }
+
+    /* ================= LCK 느낌 밴픽 애니메이션 추가 ================= */
+    .draft-container {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .draft-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 20;
+    }
+
+    .draft-container.draft-ban-screen::before {
+      animation: draftBanScreenFlash 0.65s ease;
+    }
+
+    .draft-container.draft-pick-screen::before {
+      animation: draftPickScreenFlash 0.65s ease;
+    }
+
+    @keyframes draftBanScreenFlash {
+      0% {
+        opacity: 0;
+        background: radial-gradient(circle, rgba(255, 40, 80, 0.45), transparent 60%);
+      }
+      25% { opacity: 1; }
+      100% {
+        opacity: 0;
+        background: radial-gradient(circle, rgba(255, 40, 80, 0), transparent 70%);
+      }
+    }
+
+    @keyframes draftPickScreenFlash {
+      0% {
+        opacity: 0;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.55), transparent 60%);
+      }
+      25% { opacity: 1; }
+      100% {
+        opacity: 0;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0), transparent 70%);
+      }
+    }
+
+    .ban-slot-new,
+    .pick-slot-new,
+    .champ-tile-new {
+      will-change: transform, filter, box-shadow, opacity;
+    }
+
+    .ban-slot-new.draft-ban-impact {
+      animation: draftBanImpact 0.75s ease;
+    }
+
+    .pick-slot-new.draft-pick-impact {
+      animation: draftPickImpact 0.75s ease;
+    }
+
+    @keyframes draftBanImpact {
+      0% {
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: 0 0 0 rgba(255, 50, 80, 0);
+      }
+      18% {
+        transform: scale(1.12);
+        filter: brightness(1.9) saturate(1.5);
+        box-shadow: 0 0 28px rgba(255, 50, 80, 0.9);
+      }
+      45% {
+        transform: scale(0.96);
+        filter: grayscale(1) contrast(1.25) brightness(0.85);
+        box-shadow: inset 0 0 20px rgba(255, 30, 60, 0.75);
+      }
+      100% {
+        transform: scale(1);
+        filter: grayscale(1) contrast(1.15);
+        box-shadow: none;
+      }
+    }
+
+    @keyframes draftPickImpact {
+      0% {
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: 0 0 0 rgba(212, 175, 55, 0);
+      }
+      20% {
+        transform: scale(1.08);
+        filter: brightness(2) saturate(1.5);
+        box-shadow: 0 0 32px rgba(212, 175, 55, 0.95);
+      }
+      55% {
+        transform: scale(0.98);
+        filter: brightness(1.25);
+      }
+      100% {
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: 0 0 14px rgba(212, 175, 55, 0.35);
+      }
+    }
+
+    .draft-ban-burst,
+    .draft-pick-burst {
+      position: absolute;
+      inset: -10px;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 8;
+    }
+
+    .draft-ban-burst {
+      border: 2px solid rgba(255, 50, 80, 0.9);
+      animation: draftBurstRed 0.75s ease forwards;
+    }
+
+    .draft-pick-burst {
+      border: 2px solid rgba(241, 200, 77, 0.95);
+      animation: draftBurstGold 0.75s ease forwards;
+    }
+
+    @keyframes draftBurstRed {
+      0% {
+        opacity: 0;
+        transform: scale(0.82);
+        box-shadow: 0 0 0 rgba(255, 50, 80, 0);
+      }
+      25% {
+        opacity: 1;
+        box-shadow: 0 0 24px rgba(255, 50, 80, 0.9);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.35);
+        box-shadow: 0 0 4px rgba(255, 50, 80, 0);
+      }
+    }
+
+    @keyframes draftBurstGold {
+      0% {
+        opacity: 0;
+        transform: scale(0.82);
+        box-shadow: 0 0 0 rgba(241, 200, 77, 0);
+      }
+      25% {
+        opacity: 1;
+        box-shadow: 0 0 30px rgba(241, 200, 77, 0.95);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.35);
+        box-shadow: 0 0 4px rgba(241, 200, 77, 0);
+      }
+    }
+
+    .champ-tile-new.draft-tile-ban-used {
+      animation: draftTileBanOut 0.7s ease;
+    }
+
+    .champ-tile-new.draft-tile-pick-used {
+      animation: draftTilePickOut 0.7s ease;
+    }
+
+    @keyframes draftTileBanOut {
+      0% {
+        transform: scale(1);
+        filter: grayscale(0) brightness(1);
+      }
+      20% {
+        transform: scale(1.12);
+        filter: grayscale(0) brightness(1.8);
+        box-shadow: 0 0 22px rgba(255, 60, 90, 0.9);
+      }
+      100% {
+        transform: scale(0.92);
+        filter: grayscale(1) brightness(0.55);
+        opacity: 0.45;
+      }
+    }
+
+    @keyframes draftTilePickOut {
+      0% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      25% {
+        transform: scale(1.14);
+        filter: brightness(2);
+        box-shadow: 0 0 24px rgba(241, 200, 77, 0.95);
+      }
+      100% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+    }
+
+    .draft-cinematic-banner {
+      position: absolute;
+      left: 50%;
+      top: 46%;
+      transform: translate(-50%, -50%);
+      z-index: 30;
+      pointer-events: none;
+      min-width: 280px;
+      padding: 18px 34px;
+      border-radius: 16px;
+      text-align: center;
+      font-weight: 900;
+      letter-spacing: 1px;
+      backdrop-filter: blur(8px);
+      animation: draftBannerPop 0.9s ease forwards;
+    }
+
+    .draft-cinematic-banner.ban {
+      color: #ffccd5;
+      border: 1px solid rgba(255, 80, 110, 0.8);
+      background: linear-gradient(135deg, rgba(120, 20, 40, 0.92), rgba(20, 8, 14, 0.92));
+      box-shadow: 0 0 36px rgba(255, 50, 80, 0.65);
+    }
+
+    .draft-cinematic-banner.pick {
+      color: #fff2b0;
+      border: 1px solid rgba(241, 200, 77, 0.85);
+      background: linear-gradient(135deg, rgba(120, 88, 16, 0.92), rgba(14, 12, 4, 0.92));
+      box-shadow: 0 0 36px rgba(241, 200, 77, 0.65);
+    }
+
+    .draft-cinematic-banner .draft-banner-type {
+      display: block;
+      font-size: 13px;
+      opacity: 0.85;
+      margin-bottom: 6px;
+    }
+
+    .draft-cinematic-banner .draft-banner-champ {
+      display: block;
+      font-size: 26px;
+    }
+
+    @keyframes draftBannerPop {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -46%) scale(0.88);
+      }
+      18% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.05);
+      }
+      72% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -54%) scale(0.96);
+      }
+    }
+
+    .ban-slot-new img {
+      animation: banImageGrayIn 0.55s ease;
+    }
+
+    @keyframes banImageGrayIn {
+      0% {
+        filter: grayscale(0%) contrast(1.05) brightness(1.8);
+        transform: scale(1.16);
+      }
+      55% {
+        filter: grayscale(50%) contrast(1.15) brightness(1.15);
+      }
+      100% {
+        filter: grayscale(100%) contrast(1.2) brightness(0.95);
+        transform: scale(1);
+      }
+    }
+
+  
+
+    /* ================= LCK식 팀 컬러 밴픽 연출 v2 ================= */
+    .draft-container {
+      --draft-turn: #d4af37;
+      --draft-turn-soft: rgba(212,175,55,0.22);
+      --draft-turn-strong: rgba(212,175,55,0.78);
+      position: relative;
+      overflow: hidden;
+    }
+    .draft-container.draft-turn-blue {
+      --draft-turn: #35a8ff;
+      --draft-turn-soft: rgba(53,168,255,0.22);
+      --draft-turn-strong: rgba(53,168,255,0.78);
+    }
+    .draft-container.draft-turn-red {
+      --draft-turn: #ff4769;
+      --draft-turn-soft: rgba(255,71,105,0.22);
+      --draft-turn-strong: rgba(255,71,105,0.78);
+    }
+    .draft-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 20;
+    }
+    .draft-container.draft-screen-blue::before {
+      animation: draftTeamScreenBlue 0.72s ease;
+    }
+    .draft-container.draft-screen-red::before {
+      animation: draftTeamScreenRed 0.72s ease;
+    }
+    @keyframes draftTeamScreenBlue {
+      0% { opacity: 0; background: radial-gradient(circle, rgba(53,168,255,0.0), transparent 62%); }
+      18% { opacity: 1; background: radial-gradient(circle, rgba(53,168,255,0.55), transparent 62%); }
+      100% { opacity: 0; background: radial-gradient(circle, rgba(53,168,255,0.0), transparent 72%); }
+    }
+    @keyframes draftTeamScreenRed {
+      0% { opacity: 0; background: radial-gradient(circle, rgba(255,71,105,0.0), transparent 62%); }
+      18% { opacity: 1; background: radial-gradient(circle, rgba(255,71,105,0.55), transparent 62%); }
+      100% { opacity: 0; background: radial-gradient(circle, rgba(255,71,105,0.0), transparent 72%); }
+    }
+
+    .draft-top {
+      position: relative;
+      overflow: hidden;
+    }
+    .draft-top::after {
+      content: "";
+      position: absolute;
+      left: -35%;
+      top: 0;
+      width: 32%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+      transform: skewX(-18deg);
+      pointer-events: none;
+      opacity: 0;
+    }
+    .draft-container.draft-turn-blue .draft-top,
+    .draft-container.draft-turn-red .draft-top {
+      border-color: var(--draft-turn);
+      box-shadow: 0 0 22px var(--draft-turn-soft), inset 0 0 20px rgba(255,255,255,0.03);
+    }
+    .draft-container.draft-turn-blue .draft-top::after,
+    .draft-container.draft-turn-red .draft-top::after {
+      animation: draftTopSweep 2.6s ease-in-out infinite;
+    }
+    @keyframes draftTopSweep {
+      0%, 42% { opacity: 0; left: -35%; }
+      58% { opacity: 1; }
+      100% { opacity: 0; left: 105%; }
+    }
+
+    .draft-timer-shell {
+      width: min(620px, 100%);
+      margin: 14px auto 0;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+    .draft-timer-track {
+      height: 9px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.35);
+    }
+    .draft-timer-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, var(--draft-turn), #ffffff, var(--draft-turn));
+      box-shadow: 0 0 18px var(--draft-turn-strong);
+      transform: scaleX(1);
+    }
+    .draft-timer-left .draft-timer-fill { transform-origin: left center; }
+    .draft-timer-right .draft-timer-fill { transform-origin: right center; }
+    .draft-timer-shell.running .draft-timer-fill {
+      animation: draftTimerShrink 30s linear forwards;
+    }
+    @keyframes draftTimerShrink {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+    .draft-timer-number {
+      min-width: 54px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      text-align: center;
+      font-weight: 900;
+      color: #fff;
+      border: 1px solid var(--draft-turn);
+      background: rgba(0,0,0,0.32);
+      box-shadow: 0 0 14px var(--draft-turn-soft);
+      letter-spacing: 0.5px;
+    }
+    .draft-timer-shell.finished .draft-timer-fill {
+      animation: none;
+      transform: scaleX(0);
+      opacity: 0.35;
+    }
+    .draft-timer-shell.paused .draft-timer-fill {
+      animation-play-state: paused;
+    }
+
+    .draft-phase {
+      color: var(--draft-turn);
+      text-shadow: 0 0 12px var(--draft-turn-strong);
+      transition: color 0.25s ease, text-shadow 0.25s ease;
+    }
+    .draft-side.blue .ban-slot-new.active,
+    .draft-side.blue .pick-slot-new.active {
+      border-color: #35a8ff;
+      box-shadow: 0 0 18px rgba(53,168,255,0.85), inset 0 0 18px rgba(53,168,255,0.12);
+    }
+    .draft-side.red .ban-slot-new.active,
+    .draft-side.red .pick-slot-new.active {
+      border-color: #ff4769;
+      box-shadow: 0 0 18px rgba(255,71,105,0.85), inset 0 0 18px rgba(255,71,105,0.12);
+    }
+
+    .ban-slot-new,
+    .pick-slot-new,
+    .champ-tile-new {
+      will-change: transform, filter, box-shadow, opacity;
+    }
+    .ban-slot-new img {
+      animation: banImageGrayIn 0.55s ease;
+    }
+    @keyframes banImageGrayIn {
+      0% { filter: grayscale(0%) contrast(1.05) brightness(1.8); transform: scale(1.16); }
+      55% { filter: grayscale(50%) contrast(1.15) brightness(1.15); }
+      100% { filter: grayscale(100%) contrast(1.2) brightness(0.95); transform: scale(1); }
+    }
+
+    .draft-impact-blue { animation: draftImpactBlue 0.78s ease; }
+    .draft-impact-red { animation: draftImpactRed 0.78s ease; }
+    @keyframes draftImpactBlue {
+      0% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 0 rgba(53,168,255,0); }
+      18% { transform: scale(1.12); filter: brightness(2) saturate(1.45); box-shadow: 0 0 34px rgba(53,168,255,0.95); }
+      55% { transform: scale(0.98); filter: brightness(1.15); }
+      100% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 16px rgba(53,168,255,0.22); }
+    }
+    @keyframes draftImpactRed {
+      0% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 0 rgba(255,71,105,0); }
+      18% { transform: scale(1.12); filter: brightness(2) saturate(1.45); box-shadow: 0 0 34px rgba(255,71,105,0.95); }
+      55% { transform: scale(0.98); filter: brightness(1.15); }
+      100% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 16px rgba(255,71,105,0.22); }
+    }
+
+    .draft-burst-blue,
+    .draft-burst-red {
+      position: absolute;
+      inset: -10px;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 8;
+    }
+    .draft-burst-blue {
+      border: 2px solid rgba(53,168,255,0.95);
+      animation: draftBurstBlue 0.8s ease forwards;
+    }
+    .draft-burst-red {
+      border: 2px solid rgba(255,71,105,0.95);
+      animation: draftBurstRedTeam 0.8s ease forwards;
+    }
+    @keyframes draftBurstBlue {
+      0% { opacity: 0; transform: scale(0.82); box-shadow: 0 0 0 rgba(53,168,255,0); }
+      25% { opacity: 1; box-shadow: 0 0 30px rgba(53,168,255,0.95); }
+      100% { opacity: 0; transform: scale(1.35); box-shadow: 0 0 4px rgba(53,168,255,0); }
+    }
+    @keyframes draftBurstRedTeam {
+      0% { opacity: 0; transform: scale(0.82); box-shadow: 0 0 0 rgba(255,71,105,0); }
+      25% { opacity: 1; box-shadow: 0 0 30px rgba(255,71,105,0.95); }
+      100% { opacity: 0; transform: scale(1.35); box-shadow: 0 0 4px rgba(255,71,105,0); }
+    }
+
+    .champ-tile-new.draft-tile-blue-used { animation: draftTileBlueOut 0.72s ease; }
+    .champ-tile-new.draft-tile-red-used { animation: draftTileRedOut 0.72s ease; }
+    @keyframes draftTileBlueOut {
+      0% { transform: scale(1); filter: brightness(1); }
+      22% { transform: scale(1.14); filter: brightness(2); box-shadow: 0 0 26px rgba(53,168,255,0.95); }
+      100% { transform: scale(0.96); filter: brightness(0.72) grayscale(0.7); opacity: 0.5; }
+    }
+    @keyframes draftTileRedOut {
+      0% { transform: scale(1); filter: brightness(1); }
+      22% { transform: scale(1.14); filter: brightness(2); box-shadow: 0 0 26px rgba(255,71,105,0.95); }
+      100% { transform: scale(0.96); filter: brightness(0.72) grayscale(0.7); opacity: 0.5; }
+    }
+
+    .draft-cinematic-banner {
+      position: absolute;
+      left: 50%;
+      top: 46%;
+      transform: translate(-50%, -50%);
+      z-index: 30;
+      pointer-events: none;
+      min-width: 300px;
+      padding: 18px 34px;
+      border-radius: 18px;
+      text-align: center;
+      font-weight: 900;
+      letter-spacing: 1px;
+      backdrop-filter: blur(9px);
+      animation: draftBannerPop 0.95s ease forwards;
+    }
+    .draft-cinematic-banner.blue {
+      color: #dff3ff;
+      border: 1px solid rgba(53,168,255,0.9);
+      background: linear-gradient(135deg, rgba(18,59,115,0.94), rgba(5,12,28,0.94));
+      box-shadow: 0 0 42px rgba(53,168,255,0.72);
+    }
+    .draft-cinematic-banner.red {
+      color: #ffe3e9;
+      border: 1px solid rgba(255,71,105,0.9);
+      background: linear-gradient(135deg, rgba(115,31,53,0.94), rgba(20,7,16,0.94));
+      box-shadow: 0 0 42px rgba(255,71,105,0.72);
+    }
+    .draft-cinematic-banner .draft-banner-type {
+      display: block;
+      font-size: 13px;
+      opacity: 0.9;
+      margin-bottom: 6px;
+    }
+    .draft-cinematic-banner .draft-banner-champ {
+      display: block;
+      font-size: 27px;
+    }
+    @keyframes draftBannerPop {
+      0% { opacity: 0; transform: translate(-50%, -46%) scale(0.88); }
+      18% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+      72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -54%) scale(0.96); }
+    }
+
+    .draft-container.draft-complete .champ-tile-new {
+      opacity: 0.34;
+      filter: grayscale(100%);
+      pointer-events: none;
+    }
+    .draft-container.draft-complete .draft-phase {
+      color: #d4af37;
+      text-shadow: 0 0 14px rgba(212,175,55,0.55);
+    }
+
+
+    /* ================= FINAL DRAFT DETAIL PATCH: 노밴 / 랜덤픽 / 단일 타이머 / 타일 상태 ================= */
+    .draft-controls-row #draftNoBanButton {
+      background: linear-gradient(135deg, #313a58, #1a2138);
+      color: #eef3ff;
+      border: 1px solid #4a587f;
+    }
+    .draft-controls-row #draftNoBanButton:hover {
+      background: linear-gradient(135deg, #46537a, #242d4c);
+      color: #ffffff;
+    }
+    .draft-controls-row #draftNoBanButton.disabled,
+    .draft-controls-row #draftNoBanButton:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+      filter: grayscale(0.5);
+    }
+
+    .draft-timer-shell {
+      width: min(680px, 100%) !important;
+      margin: 14px auto 0 !important;
+      display: grid !important;
+      grid-template-columns: 1fr auto !important;
+      align-items: center !important;
+      gap: 12px !important;
+    }
+    .draft-timer-track {
+      height: 12px !important;
+      background: rgba(255,255,255,0.075) !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+      border-radius: 999px !important;
+      overflow: hidden !important;
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.45), 0 0 14px var(--draft-turn-soft) !important;
+      position: relative !important;
+    }
+    .draft-timer-track::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      opacity: 0.65;
+      pointer-events: none;
+    }
+    .draft-timer-fill {
+      width: 100% !important;
+      height: 100% !important;
+      background: linear-gradient(90deg, var(--draft-turn), #ffffff, var(--draft-turn)) !important;
+      box-shadow: 0 0 20px var(--draft-turn-strong) !important;
+      transform-origin: left center !important;
+      transform: scaleX(1);
+    }
+    .draft-timer-shell.running .draft-timer-fill {
+      animation: draftTimerShrink 30s linear forwards !important;
+    }
+    .draft-timer-number {
+      min-width: 58px !important;
+      padding: 6px 12px !important;
+      font-size: 15px !important;
+      border-radius: 999px !important;
+      text-align: center !important;
+      font-weight: 900 !important;
+      color: #fff !important;
+      border: 1px solid var(--draft-turn) !important;
+      background: rgba(0,0,0,0.42) !important;
+      box-shadow: 0 0 16px var(--draft-turn-soft) !important;
+    }
+
+    .champ-tile-new {
+      position: relative;
+      overflow: hidden;
+    }
+    .champ-tile-new.draft-banned-blue,
+    .champ-tile-new.draft-banned-red,
+    .champ-tile-new.draft-picked-blue,
+    .champ-tile-new.draft-picked-red {
+      pointer-events: none;
+    }
+    .champ-tile-new.draft-banned-blue img,
+    .champ-tile-new.draft-banned-red img {
+      filter: grayscale(100%) brightness(0.58) contrast(1.18);
+      transform: scale(0.96);
+    }
+    .champ-tile-new.draft-picked-blue img,
+    .champ-tile-new.draft-picked-red img {
+      filter: brightness(0.95) saturate(1.05);
+    }
+    .champ-tile-new.draft-picked-blue {
+      border-color: rgba(53,168,255,0.9) !important;
+      box-shadow: inset 0 0 0 2px rgba(53,168,255,0.35), 0 0 12px rgba(53,168,255,0.28);
+      background: linear-gradient(180deg, rgba(38,95,150,0.72), #10182d) !important;
+    }
+    .champ-tile-new.draft-picked-red {
+      border-color: rgba(255,71,105,0.9) !important;
+      box-shadow: inset 0 0 0 2px rgba(255,71,105,0.32), 0 0 12px rgba(255,71,105,0.26);
+      background: linear-gradient(180deg, rgba(142,42,60,0.76), #22111b) !important;
+    }
+    .champ-tile-new.draft-banned-blue::after,
+    .champ-tile-new.draft-banned-red::after {
+      content: "✕";
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%) rotate(-8deg);
+      font-size: 38px;
+      font-weight: 1000;
+      line-height: 1;
+      color: #ff375f;
+      text-shadow: 0 0 8px rgba(0,0,0,0.9), 0 0 16px rgba(255,48,84,0.75);
+      z-index: 5;
+      pointer-events: none;
+    }
+    .champ-tile-new.draft-banned-blue::before,
+    .champ-tile-new.draft-banned-red::before {
+      content: "";
+      position: absolute;
+      left: -18%;
+      top: 50%;
+      width: 136%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, rgba(255,48,84,0.95), transparent);
+      transform: rotate(-35deg);
+      box-shadow: 0 0 12px rgba(255,48,84,0.95);
+      z-index: 4;
+      pointer-events: none;
+    }
+    .champ-tile-new.draft-picked-blue::after,
+    .champ-tile-new.draft-picked-red::after {
+      content: attr(data-draft-label);
+      position: absolute;
+      left: 5px;
+      right: 5px;
+      top: 5px;
+      z-index: 5;
+      padding: 3px 5px;
+      border-radius: 999px;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #fff;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+      background: rgba(0,0,0,0.45);
+      border: 1px solid rgba(255,255,255,0.18);
+      pointer-events: none;
+    }
+    .champ-tile-new.draft-picked-blue::before,
+    .champ-tile-new.draft-picked-red::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+    .champ-tile-new.draft-picked-blue::before {
+      background: linear-gradient(180deg, rgba(53,168,255,0.42), rgba(53,168,255,0.06));
+    }
+    .champ-tile-new.draft-picked-red::before {
+      background: linear-gradient(180deg, rgba(255,71,105,0.44), rgba(255,71,105,0.06));
+    }
+    .champ-tile-new.draft-banned-blue .tile-name,
+    .champ-tile-new.draft-banned-red .tile-name {
+      color: #727b95 !important;
+      text-decoration: line-through;
+    }
+    .champ-tile-new.draft-picked-blue .tile-name {
+      color: #9ed8ff !important;
+      font-weight: 900;
+    }
+    .champ-tile-new.draft-picked-red .tile-name {
+      color: #ffadc0 !important;
+      font-weight: 900;
+    }
+
+
+
+    /* ================= FINAL DRAFT DETAIL FIX: 챔피언 타일 비율 / 노밴 / 이미지 저장 ================= */
+    .champ-grid-new {
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
+      align-items: start !important;
+      grid-auto-rows: auto !important;
+    }
+    .champ-tile-new {
+      min-height: 94px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      justify-content: flex-start !important;
+      padding: 6px !important;
+      gap: 4px !important;
+    }
+    .champ-tile-new img {
+      display: block !important;
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 1 / 1 !important;
+      object-fit: cover !important;
+      flex: 0 0 auto !important;
+      border-radius: 6px !important;
+    }
+    .champ-tile-new .tile-name {
+      min-height: 14px !important;
+      line-height: 1.15 !important;
+      margin-top: 2px !important;
+      flex: 0 0 auto !important;
+    }
+    .draft-controls-row #draftNoBanButton {
+      min-width: 72px;
+    }
+    .draft-save-button {
+      background: linear-gradient(135deg, #57451b, #2b2413) !important;
+      color: #fff2ba !important;
+      border: 1px solid rgba(241,200,77,0.55) !important;
+    }
+    .draft-save-button:hover:not(:disabled) {
+      background: linear-gradient(135deg, #d4af37, #7c5f17) !important;
+      color: #09110d !important;
+      box-shadow: 0 0 16px rgba(212,175,55,0.45);
+    }
+    .draft-save-button:disabled,
+    .draft-save-button.disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+      transform: none !important;
+    }
+
+  
+
+    /* ================= DRAFT POLISH v3: 검색/캡처/완료 UI 정리 ================= */
+    .champ-grid-new {
+      grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)) !important;
+      gap: 10px !important;
+      align-items: start !important;
+    }
+    .champ-tile-new {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 5px !important;
+      min-height: 104px !important;
+      border-radius: 10px !important;
+      padding: 7px !important;
+    }
+    .champ-tile-new.draft-filter-hidden {
+      display: none !important;
+    }
+    .champ-tile-new img {
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 1 / 1 !important;
+      object-fit: cover !important;
+      flex: 0 0 auto !important;
+      border-radius: 8px !important;
+      background: #070b14 !important;
+    }
+    .champ-tile-new .tile-name {
+      display: block !important;
+      min-height: 15px !important;
+      line-height: 1.15 !important;
+      margin-top: 2px !important;
+      font-size: 11px !important;
+    }
+    .draft-status-text.complete {
+      color: #dfe7ff !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.4px !important;
+    }
+    .draft-container.draft-complete .draft-top {
+      border-color: rgba(212,175,55,0.75) !important;
+      box-shadow: 0 0 30px rgba(212,175,55,0.22), inset 0 0 22px rgba(212,175,55,0.04) !important;
+    }
+    .draft-save-button:not(:disabled) {
+      background: linear-gradient(135deg, #d4af37, #fff0a8) !important;
+      color: #0b1020 !important;
+      box-shadow: 0 0 16px rgba(212,175,55,0.36) !important;
+    }
+
+
+    /* ================= DRAFT POLISH v4: 차례 문구/버튼 간격/픽 체크 표시 ================= */
+    .draft-top {
+      gap: 24px !important;
+    }
+    .draft-info-block {
+      flex: 1 1 auto !important;
+      min-width: 280px !important;
+    }
+    .draft-controls-row {
+      margin-left: 28px !important;
+      padding-left: 18px !important;
+      gap: 12px !important;
+      flex: 0 0 auto !important;
+      align-items: center !important;
+    }
+    .draft-controls-row button {
+      padding-left: 16px !important;
+      padding-right: 16px !important;
+    }
+
+    .champ-tile-new.draft-picked-blue,
+    .champ-tile-new.draft-picked-red {
+      position: relative !important;
+      overflow: hidden !important;
+      transform: translateY(-1px);
+    }
+    .champ-tile-new.draft-picked-blue {
+      border-color: rgba(53, 168, 255, 1) !important;
+      background: linear-gradient(180deg, rgba(28, 91, 155, 0.88), rgba(8, 20, 42, 0.98)) !important;
+      box-shadow:
+        inset 0 0 0 2px rgba(53, 168, 255, 0.42),
+        inset 0 -28px 36px rgba(53, 168, 255, 0.24),
+        0 0 16px rgba(53, 168, 255, 0.38) !important;
+    }
+    .champ-tile-new.draft-picked-red {
+      border-color: rgba(255, 71, 105, 1) !important;
+      background: linear-gradient(180deg, rgba(142, 42, 60, 0.9), rgba(34, 11, 22, 0.98)) !important;
+      box-shadow:
+        inset 0 0 0 2px rgba(255, 71, 105, 0.42),
+        inset 0 -28px 36px rgba(255, 71, 105, 0.24),
+        0 0 16px rgba(255, 71, 105, 0.35) !important;
+    }
+    .champ-tile-new.draft-picked-blue img,
+    .champ-tile-new.draft-picked-red img {
+      filter: saturate(1.35) brightness(0.86) contrast(1.1) !important;
+      transform: scale(1.02);
+    }
+    .champ-tile-new.draft-picked-blue::before,
+    .champ-tile-new.draft-picked-red::before {
+      content: "" !important;
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 3 !important;
+      pointer-events: none !important;
+      mix-blend-mode: screen !important;
+    }
+    .champ-tile-new.draft-picked-blue::before {
+      background:
+        radial-gradient(circle at 50% 32%, rgba(95, 190, 255, 0.48), transparent 45%),
+        linear-gradient(180deg, rgba(53, 168, 255, 0.44), rgba(53, 168, 255, 0.08)) !important;
+    }
+    .champ-tile-new.draft-picked-red::before {
+      background:
+        radial-gradient(circle at 50% 32%, rgba(255, 126, 148, 0.48), transparent 45%),
+        linear-gradient(180deg, rgba(255, 71, 105, 0.46), rgba(255, 71, 105, 0.08)) !important;
+    }
+    .champ-tile-new.draft-picked-blue::after,
+    .champ-tile-new.draft-picked-red::after {
+      content: "✓" !important;
+      position: absolute !important;
+      left: auto !important;
+      right: 6px !important;
+      top: 6px !important;
+      width: 22px !important;
+      height: 22px !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 50% !important;
+      font-size: 15px !important;
+      font-weight: 1000 !important;
+      letter-spacing: 0 !important;
+      line-height: 1 !important;
+      color: #ffffff !important;
+      text-align: center !important;
+      z-index: 6 !important;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.75) !important;
+      pointer-events: none !important;
+    }
+    .champ-tile-new.draft-picked-blue::after {
+      background: linear-gradient(135deg, #35a8ff, #0c4fb1) !important;
+      border: 1px solid rgba(185, 232, 255, 0.9) !important;
+      box-shadow: 0 0 12px rgba(53, 168, 255, 0.85) !important;
+    }
+    .champ-tile-new.draft-picked-red::after {
+      background: linear-gradient(135deg, #ff4769, #9d1933) !important;
+      border: 1px solid rgba(255, 200, 210, 0.9) !important;
+      box-shadow: 0 0 12px rgba(255, 71, 105, 0.82) !important;
+    }
+    .champ-tile-new.draft-picked-blue .tile-name,
+    .champ-tile-new.draft-picked-red .tile-name {
+      position: relative !important;
+      z-index: 7 !important;
+      color: #ffffff !important;
+      font-weight: 1000 !important;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.75) !important;
+    }
+
+    /* ================= FINAL FIX: 픽된 챔피언 타일 구분 강화 =================
+       disabled 클래스의 opacity/filter 때문에 픽 타일이 너무 어둡게 보이던 문제를 덮어씀
+       밴: 어둡고 X 표시 / 블루 픽: 선명한 파랑 / 레드 픽: 선명한 빨강
+    */
+    .champ-tile-new.draft-picked-blue.disabled,
+    .champ-tile-new.draft-picked-red.disabled {
+      opacity: 1 !important;
+      filter: none !important;
+      pointer-events: none !important;
+    }
+
+    .champ-tile-new.draft-picked-blue,
+    .champ-tile-new.draft-picked-red {
+      opacity: 1 !important;
+      filter: none !important;
+      position: relative !important;
+      overflow: hidden !important;
+      transform: translateY(-1px) !important;
+    }
+
+    .champ-tile-new.draft-picked-blue {
+      background: linear-gradient(180deg, rgba(27, 110, 210, 0.98), rgba(7, 24, 56, 1)) !important;
+      border-color: #37b7ff !important;
+      box-shadow:
+        inset 0 0 0 2px rgba(108, 208, 255, 0.72),
+        inset 0 0 34px rgba(53, 168, 255, 0.48),
+        0 0 20px rgba(53, 168, 255, 0.72) !important;
+    }
+
+    .champ-tile-new.draft-picked-red {
+      background: linear-gradient(180deg, rgba(184, 38, 68, 0.98), rgba(62, 8, 24, 1)) !important;
+      border-color: #ff5475 !important;
+      box-shadow:
+        inset 0 0 0 2px rgba(255, 128, 150, 0.68),
+        inset 0 0 34px rgba(255, 71, 105, 0.48),
+        0 0 20px rgba(255, 71, 105, 0.68) !important;
+    }
+
+    .champ-tile-new.draft-picked-blue img,
+    .champ-tile-new.draft-picked-red img {
+      position: relative !important;
+      z-index: 1 !important;
+      opacity: 0.92 !important;
+      transform: scale(1.04) !important;
+      filter: grayscale(0%) saturate(1.35) brightness(0.9) contrast(1.18) !important;
+    }
+
+    .champ-tile-new.draft-picked-blue::before,
+    .champ-tile-new.draft-picked-red::before {
+      content: "" !important;
+      position: absolute !important;
+      inset: 0 !important;
+      z-index: 3 !important;
+      pointer-events: none !important;
+      mix-blend-mode: normal !important;
+    }
+
+    .champ-tile-new.draft-picked-blue::before {
+      background:
+        linear-gradient(180deg, rgba(48, 174, 255, 0.68), rgba(11, 73, 166, 0.58)),
+        radial-gradient(circle at 50% 35%, rgba(178, 231, 255, 0.36), transparent 48%) !important;
+    }
+
+    .champ-tile-new.draft-picked-red::before {
+      background:
+        linear-gradient(180deg, rgba(255, 73, 110, 0.70), rgba(145, 18, 48, 0.60)),
+        radial-gradient(circle at 50% 35%, rgba(255, 199, 209, 0.34), transparent 48%) !important;
+    }
+
+    .champ-tile-new.draft-picked-blue::after,
+    .champ-tile-new.draft-picked-red::after {
+      content: "✓" !important;
+      position: absolute !important;
+      right: 6px !important;
+      top: 6px !important;
+      left: auto !important;
+      width: 28px !important;
+      height: 28px !important;
+      padding: 0 !important;
+      z-index: 8 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 50% !important;
+      font-size: 18px !important;
+      font-weight: 1000 !important;
+      color: #ffffff !important;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.9) !important;
+      pointer-events: none !important;
+    }
+
+    .champ-tile-new.draft-picked-blue::after {
+      background: linear-gradient(135deg, #58caff, #005dcb) !important;
+      border: 2px solid rgba(215, 246, 255, 0.95) !important;
+      box-shadow: 0 0 16px rgba(53, 168, 255, 0.95) !important;
+    }
+
+    .champ-tile-new.draft-picked-red::after {
+      background: linear-gradient(135deg, #ff6b86, #b6002b) !important;
+      border: 2px solid rgba(255, 222, 228, 0.95) !important;
+      box-shadow: 0 0 16px rgba(255, 71, 105, 0.95) !important;
+    }
+
+    .champ-tile-new.draft-picked-blue .tile-name,
+    .champ-tile-new.draft-picked-red .tile-name {
+      position: relative !important;
+      z-index: 9 !important;
+      color: #ffffff !important;
+      font-weight: 1000 !important;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.95) !important;
+    }
+
+    .champ-tile-new.draft-banned-blue.disabled,
+    .champ-tile-new.draft-banned-red.disabled {
+      opacity: 0.58 !important;
+      filter: grayscale(100%) brightness(0.68) contrast(1.15) !important;
+    }
+
+
+    /* v6 draft complete drag reorder: 완료 후 같은 팀 안에서만 픽 순서 변경 */
+    .pick-slot-new.draft-pick-draggable {
+      cursor: grab;
+      outline: 1px solid rgba(255,255,255,0.08);
+    }
+    .pick-slot-new.draft-pick-draggable:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 18px rgba(241, 200, 77, 0.22);
+    }
+    .pick-slot-new.draft-pick-dragging {
+      opacity: 0.45;
+      transform: scale(0.98);
+    }
+    .pick-slot-new.draft-pick-drop-over {
+      border-color: #f1c84d !important;
+      box-shadow: 0 0 24px rgba(241, 200, 77, 0.55) !important;
+    }
+    .pick-slot-new.draft-pick-drop-over::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 4px;
+      height: 3px;
+      border-radius: 999px;
+      background: #f1c84d;
+      box-shadow: 0 0 14px rgba(241, 200, 77, 0.75);
+    }
+
+
+    /* ===== 통합 추가: 룰렛 / 셔플 / 등록명단 편집 ===== */
+    .fun-box {
+      min-height: 88px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .slot-item {
+      display: inline-block;
+      animation: slotSpin 0.08s linear;
+    }
+    @keyframes slotSpin {
+      from { transform: translateY(-38px); opacity: 0; filter: blur(2px); }
+      to { transform: translateY(0); opacity: 1; filter: blur(0); }
+    }
+    .roulette-running {
+      border-color: var(--accent) !important;
+      box-shadow: inset 0 0 22px rgba(0,0,0,0.55), 0 0 22px var(--glow) !important;
+    }
+
+    .shuffle-button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #08100c;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 16px var(--glow);
+    }
+    .shuffle-button::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -120%;
+      width: 80%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.38), transparent);
+      transform: skewX(-20deg);
+      transition: 0.35s;
+    }
+    .shuffle-button:hover::after { left: 140%; }
+    .shuffle-button:disabled,
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* ===== 포커식 팀 셔플 연출 v5: 절제된 포커 덱 방식 =====
+       - 선수 행 10개를 전부 띄우지 않음
+       - 중앙에 카드 덱 5장만 짧게 정렬
+       - 결과표는 부드럽게 교체
+    */
+    .match-container.shuffle-dim {
+      position: relative;
+      overflow: hidden !important;
+    }
+    .match-container.shuffle-dim .team-area,
+    .match-container.shuffle-dim .arena-grid-6,
+    .match-container.shuffle-dim .difference-box,
+    .match-container.shuffle-dim .drag-guide {
+      opacity: 0;
+      filter: blur(0.6px) saturate(0.92);
+      transform: scale(0.998);
+      transition: opacity 0.16s ease, filter 0.16s ease, transform 0.16s ease;
+    }
+    .shuffle-cinematic-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .shuffle-cinematic-layer::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(5, 8, 18, 0.055);
+      opacity: 0;
+      animation: shuffleLayerSoftFade 0.72s ease forwards;
+    }
+    .shuffle-deck {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: 214px;
+      height: 66px;
+      transform: translate(-50%, -50%);
+      z-index: 100000;
+      opacity: 0;
+      animation: shuffleDeckWrap 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .shuffle-deck-card {
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      border: 1px solid rgba(241,200,77,0.58);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.06), transparent 38%),
+        linear-gradient(180deg, rgba(34,43,73,0.98), rgba(12,18,33,0.98));
+      box-shadow: 0 16px 34px rgba(0,0,0,0.38), 0 0 18px rgba(241,200,77,0.13);
+      transform-origin: center;
+      overflow: hidden;
+    }
+    .shuffle-deck-card::before {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.075);
+      background: repeating-linear-gradient(135deg, rgba(255,255,255,0.055) 0 7px, transparent 7px 14px);
+    }
+    .shuffle-deck-card:nth-child(1) { transform: translate(-5px, 3px) rotate(-3deg); }
+    .shuffle-deck-card:nth-child(2) { transform: translate(-2px, 1px) rotate(-1.5deg); }
+    .shuffle-deck-card:nth-child(3) { transform: translate(0, 0) rotate(0deg); }
+    .shuffle-deck-card:nth-child(4) { transform: translate(2px, -1px) rotate(1.5deg); }
+    .shuffle-deck-card:nth-child(5) { transform: translate(5px, -3px) rotate(3deg); }
+    .shuffle-deck.cutting .shuffle-deck-card:nth-child(1) { animation: shuffleDeckCutLeft 0.34s ease-in-out forwards; }
+    .shuffle-deck.cutting .shuffle-deck-card:nth-child(2) { animation: shuffleDeckCutLeftSmall 0.34s ease-in-out forwards; }
+    .shuffle-deck.cutting .shuffle-deck-card:nth-child(4) { animation: shuffleDeckCutRightSmall 0.34s ease-in-out forwards; }
+    .shuffle-deck.cutting .shuffle-deck-card:nth-child(5) { animation: shuffleDeckCutRight 0.34s ease-in-out forwards; }
+    .team-player.shuffle-spread-in,
+    .arena-mem.shuffle-spread-in {
+      animation: shuffleSpreadIn 0.30s ease both;
+    }
+    @keyframes shuffleLayerSoftFade {
+      0% { opacity: 0; }
+      18% { opacity: 1; }
+      82% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    @keyframes shuffleDeckWrap {
+      0% { opacity: 0; transform: translate(-50%, -47%) scale(0.96); filter: blur(1px); }
+      18% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+      72% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+      100% { opacity: 0; transform: translate(-50%, -52%) scale(0.98); filter: blur(0.8px); }
+    }
+    @keyframes shuffleDeckCutLeft {
+      0% { transform: translate(-5px, 3px) rotate(-3deg); }
+      50% { transform: translate(-28px, 4px) rotate(-5deg); }
+      100% { transform: translate(-3px, 2px) rotate(-2deg); }
+    }
+    @keyframes shuffleDeckCutLeftSmall {
+      0% { transform: translate(-2px, 1px) rotate(-1.5deg); }
+      50% { transform: translate(-14px, 2px) rotate(-3deg); }
+      100% { transform: translate(-1px, 1px) rotate(-1deg); }
+    }
+    @keyframes shuffleDeckCutRightSmall {
+      0% { transform: translate(2px, -1px) rotate(1.5deg); }
+      50% { transform: translate(14px, -2px) rotate(3deg); }
+      100% { transform: translate(1px, -1px) rotate(1deg); }
+    }
+    @keyframes shuffleDeckCutRight {
+      0% { transform: translate(5px, -3px) rotate(3deg); }
+      50% { transform: translate(28px, -4px) rotate(5deg); }
+      100% { transform: translate(3px, -2px) rotate(2deg); }
+    }
+    @keyframes shuffleSpreadIn {
+      0% { opacity: 0; transform: translateY(5px); filter: blur(0.7px); }
+      100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+
+    .player-card {
+      position: relative;
+      overflow: visible !important;
+      padding-top: 18px !important;
+    }
+    .player-card.edit-pulse {
+      animation: editPulse 0.28s ease;
+    }
+    @keyframes editPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 rgba(212,175,55,0); }
+      50% { transform: scale(1.025); box-shadow: 0 0 18px var(--glow); }
+      100% { transform: scale(1); box-shadow: 0 0 0 rgba(212,175,55,0); }
+    }
+    .card-trash-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.35);
+      color: #ff6b7d;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      font-size: 13px;
+      z-index: 4;
+    }
+    .card-trash-btn:hover {
+      background: #ff5e62;
+      color: #fff;
+      transform: scale(1.08);
+      box-shadow: 0 0 10px rgba(255,94,98,0.45);
+    }
+    .card-edit-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      margin: 8px 0;
+    }
+    .card-select {
+      width: auto;
+      min-width: 72px;
+      max-width: calc(100% - 22px);
+      padding: 7px 30px 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid rgba(255,255,255,0.10);
+      cursor: pointer;
+      appearance: auto;
+      -webkit-appearance: auto;
+      background-image: none !important;
+      background-repeat: no-repeat !important;
+      text-align: center;
+      text-align-last: center;
+      white-space: nowrap;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.16);
+    }
+    .card-select.tier {
+      background-color: #6f5cff;
+      color: #fff;
+    }
+    .card-select.line {
+      background-color: var(--accent);
+      color: #09110d;
+      min-width: 58px;
+    }
+    .card-select.champion-select {
+      background-color: #9b3e3a;
+      color: #fff;
+      min-width: 82px;
+    }
+    .card-select:disabled {
+      opacity: 0.85;
+    }
+    .card-select option {
+      background: #151c31;
+      color: #fff;
+      font-weight: normal;
+    }
+    .card-edit-caption {
+      display: none !important;
+    }
+
+  
+
+    /* ================= SEARCH DROPDOWN FINAL PATCH v2 ================= */
+    .champion-search-box, .nickname-search-box {
+      position: relative !important;
+      width: 100% !important;
+    }
+    .champion-dropdown, .nickname-dropdown {
+      display: none;
+      position: absolute !important;
+      top: calc(100% + 8px) !important;
+      left: 0 !important;
+      right: 0 !important;
+      max-height: 320px !important;
+      overflow-y: auto !important;
+      background: #0e1426 !important;
+      border: 1px solid var(--border-soft) !important;
+      border-radius: 12px !important;
+      z-index: 20000 !important;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.5) !important;
+      padding: 8px !important;
+      overscroll-behavior: contain;
+    }
+    .champion-dropdown.is-open, .nickname-dropdown.is-open {
+      display: block !important;
+    }
+    .champion-option, .nickname-option {
+      display: grid !important;
+      grid-template-columns: 34px 1fr !important;
+      align-items: center !important;
+      gap: 10px !important;
+      padding: 9px 10px !important;
+      cursor: pointer !important;
+      color: var(--text-main) !important;
+      border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+      border-radius: 9px !important;
+      line-height: 1.25 !important;
+      user-select: none !important;
+    }
+    .nickname-option {
+      grid-template-columns: 1fr !important;
+      gap: 3px !important;
+    }
+    .champion-option:last-child, .nickname-option:last-child { border-bottom: none !important; }
+    .champion-option:hover, .nickname-option:hover,
+    .champion-option.active, .nickname-option.active {
+      background: var(--card-top) !important;
+      color: #fff !important;
+    }
+    .search-champion-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent);
+      background: var(--panel-soft);
+    }
+
+    .sub-button:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+      transform: none !important;
+      filter: grayscale(0.35);
+    }
+    .search-sub-text.is-hidden-meta,
+    .db-meta .hidden-search-meta {
+      display: none !important;
+    }
+
+    .search-main-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 800;
+    }
+    .search-sub-text, .db-meta {
+      display: block;
+      margin-top: 3px;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .no-result {
+      padding: 13px 12px !important;
+      color: var(--text-muted) !important;
+      text-align: center !important;
+    }
+
+  
+
+    /* ================= PATCH v4: 밴픽 검색은 이미지 중심 + 빠른 재배치 ================= */
+    .draft-container .champ-grid-new {
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
+      gap: 10px !important;
+    }
+    .draft-container .champ-tile-new {
+      min-height: auto !important;
+      padding: 6px !important;
+      transition: opacity 0.16s ease, transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease !important;
+    }
+    .draft-container .champ-tile-new .tile-name {
+      display: none !important;
+    }
+    .draft-container .champ-tile-new img {
+      border-radius: 8px !important;
+    }
+    .draft-container .champ-tile-new.draft-filter-hidden {
+      display: none !important;
+    }
+    .draft-container .champ-tile-new.draft-filter-enter {
+      animation: draftTileFilterEnter 0.18s ease-out;
+    }
+    @keyframes draftTileFilterEnter {
+      from { opacity: 0; transform: scale(0.88); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+  
+
+    /* ================= PATCH v5: 밴픽 챔피언 이미지 짜부 방지 =================
+       검색 v4에서 이름을 숨기면서 이미지가 원본 가로 비율로 눌려 보이는 문제를 해결.
+       타일 자체와 이미지 영역을 정사각형으로 강제하고, 실제 이미지는 cover로 잘라 보여준다.
+    */
+    .draft-container .champ-grid-new {
+      grid-template-columns: repeat(auto-fill, minmax(68px, 68px)) !important;
+      grid-auto-rows: 68px !important;
+      justify-content: start !important;
+      align-items: start !important;
+      gap: 9px !important;
+    }
+
+    .draft-container .champ-tile-new {
+      box-sizing: border-box !important;
+      width: 68px !important;
+      height: 68px !important;
+      min-width: 68px !important;
+      min-height: 68px !important;
+      max-width: 68px !important;
+      max-height: 68px !important;
+      aspect-ratio: 1 / 1 !important;
+      display: block !important;
+      padding: 5px !important;
+      overflow: hidden !important;
+      border-radius: 10px !important;
+      flex: none !important;
+    }
+
+    .draft-container .champ-tile-new img {
+      box-sizing: border-box !important;
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-width: 100% !important;
+      min-height: 100% !important;
+      aspect-ratio: 1 / 1 !important;
+      object-fit: cover !important;
+      object-position: center center !important;
+      border-radius: 7px !important;
+      flex: none !important;
+    }
+
+    .draft-container .champ-tile-new .tile-name {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .draft-container .champ-tile-new.draft-filter-hidden {
+      display: none !important;
+    }
+
+    .draft-container .champ-tile-new.disabled {
+      opacity: 0.38 !important;
+    }
+
+    .draft-container .champ-tile-new.draft-picked-blue,
+    .draft-container .champ-tile-new.draft-picked-red,
+    .draft-container .champ-tile-new.draft-banned-blue,
+    .draft-container .champ-tile-new.draft-banned-red {
+      width: 68px !important;
+      height: 68px !important;
+      min-height: 68px !important;
+      aspect-ratio: 1 / 1 !important;
+    }
+
+    @media (max-width: 1200px) {
+      .draft-container .champ-grid-new {
+        grid-template-columns: repeat(auto-fill, minmax(62px, 62px)) !important;
+        grid-auto-rows: 62px !important;
+        gap: 8px !important;
+      }
+      .draft-container .champ-tile-new {
+        width: 62px !important;
+        height: 62px !important;
+        min-width: 62px !important;
+        min-height: 62px !important;
+        max-width: 62px !important;
+        max-height: 62px !important;
+      }
+      .draft-container .champ-tile-new.draft-picked-blue,
+      .draft-container .champ-tile-new.draft-picked-red,
+      .draft-container .champ-tile-new.draft-banned-blue,
+      .draft-container .champ-tile-new.draft-banned-red {
+        width: 62px !important;
+        height: 62px !important;
+        min-height: 62px !important;
+      }
+    }
+
+
+
+    /* ================= MODE BACKGROUND IMAGE PATCH v2 =================
+       배경이 검게 깔려 죽지 않도록 레이어 순서와 오버레이 강도를 재조정했습니다.
+       images/classic.png, images/aram.png, images/arena.png 파일을
+       HTML과 같은 위치의 images 폴더에 두면 모드별 배경이 적용됩니다.
+    */
+    html {
+      min-height: 100%;
+      background: #0b1020;
+    }
+
+    body {
+      position: relative;
+      min-height: 100vh;
+      overflow-x: hidden;
+      isolation: isolate;
+      background-color: var(--bg-main);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      opacity: 0.72;
+      filter: saturate(1.35) contrast(1.08) brightness(1.05);
+      pointer-events: none;
+      z-index: 0;
+      transform: translateZ(0) scale(1.02);
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(
+          circle at center,
+          rgba(11,16,32,0) 0%,
+          rgba(11,16,32,0.04) 48%,
+          rgba(11,16,32,0.18) 78%,
+          rgba(11,16,32,0.52) 100%
+        ),
+        linear-gradient(
+          180deg,
+          rgba(11,16,32,0.18) 0%,
+          rgba(11,16,32,0.30) 58%,
+          rgba(11,16,32,0.48) 100%
+        );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body.mode-classic::before {
+      background-image: url("./images/classic.png");
+    }
+
+    body.mode-aram::before {
+      background-image: url("./images/aram.png");
+      filter: saturate(1.42) contrast(1.08) brightness(1.08);
+    }
+
+    body.mode-arena::before {
+      background-image: url("./images/arena.png");
+      filter: saturate(1.45) contrast(1.10) brightness(1.06);
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* 배경이 보이도록 큰 패널만 살짝 유리처럼 처리 */
+    .mode-selection,
+    .section,
+    .match-container,
+    .draft-container,
+    .draft-center-area,
+    .arena-team-box,
+    .player-card,
+    .team {
+      backdrop-filter: blur(7px);
+    }
+
+    .mode-selection,
+    .section {
+      background: color-mix(in srgb, var(--panel-bg) 84%, transparent) !important;
+    }
+
+    .match-container,
+    .draft-center-area {
+      background: color-mix(in srgb, var(--panel-soft) 82%, transparent) !important;
+    }
+
+    .player-card,
+    .arena-team-box {
+      background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--card-top) 86%, transparent),
+        color-mix(in srgb, var(--card-bottom) 88%, transparent)
+      ) !important;
+    }
+  </style>
+</head>
+<body class="mode-classic">
+  <div class="container">
+    <h1 id="mainTitle">LOL 내전 통합 생성기</h1>
+
+    <div class="mode-selection">
+      <button id="mode-classic" class="mode-btn active" onclick="selectGameMode('classic')">소환사의 협곡 🌲</button>
+      <button id="mode-aram" class="mode-btn" onclick="selectGameMode('aram')">칼바람 나락 ❄️</button>
+      <button id="mode-arena" class="mode-btn" onclick="selectGameMode('arena')">아레나 ⚔️</button>
+    </div>
+
+    <div class="tab-menu">
+      <button id="btn-player-register" class="tab-btn active" onclick="switchTab('tab-player-register')">1. 선수 등록</button>
+      <button id="btn-player-list" class="tab-btn" onclick="switchTab('tab-player-list')">2. 등록 명단 (<span id="tabCount">0</span>명)</button>
+      <button id="btn-match-team" class="tab-btn" onclick="switchTab('tab-match-team')">3. 내전표</button>
+      <button id="btn-fun" class="tab-btn" onclick="switchTab('tab-fun')">4. 놀이</button>
+      <button id="btn-banpick" class="tab-btn" onclick="switchTab('tab-banpick')">5. 임시 밴픽</button>
+    </div>
+
+    <div id="tab-player-register" class="section active">
+      <h2 id="registerTitle">1. 선수 등록</h2>
+      <div id="registerGrid" class="direct-grid">
+        <input id="nickname" type="text" placeholder="닉네임" />
+        <div class="tier-select-box">
+          <input id="tier" type="text" placeholder="티어 선택" readonly autocomplete="off" />
+          <div id="tierDropdown" class="tier-dropdown">
+            <div class="tier-option" data-value="챌린저">챌린저</div>
+            <div class="tier-option" data-value="그랜드마스터">그랜드마스터</div>
+            <div class="tier-option" data-value="마스터 1000점이상">마스터 1000점이상</div>
+            <div class="tier-option" data-value="마스터 900~999점">마스터 900~999점</div>
+            <div class="tier-option" data-value="마스터 800~899점">마스터 800~899점</div>
+            <div class="tier-option" data-value="마스터 700~799점">마스터 700~799점</div>
+            <div class="tier-option" data-value="마스터 600~699점">마스터 600~699점</div>
+            <div class="tier-option" data-value="마스터 500~599점">마스터 500~599점</div>
+            <div class="tier-option" data-value="마스터 400~499점">마스터 400~499점</div>
+            <div class="tier-option" data-value="마스터 300~399점">마스터 300~399점</div>
+            <div class="tier-option" data-value="마스터 200~299점">마스터 200~299점</div>
+            <div class="tier-option" data-value="마스터 100~199점">마스터 100~199점</div>
+            <div class="tier-option" data-value="마스터 0~99점">마스터 0~99점</div>
+            <div class="tier-option" data-value="다이아1">다이아1</div>
+            <div class="tier-option" data-value="다이아2">다이아2</div>
+            <div class="tier-option" data-value="다이아3">다이아3</div>
+            <div class="tier-option" data-value="다이아4">다이아4</div>
+            <div class="tier-option" data-value="에메랄드1">에메랄드1</div>
+            <div class="tier-option" data-value="에메랄드2">에메랄드2</div>
+            <div class="tier-option" data-value="에메랄드3">에메랄드3</div>
+            <div class="tier-option" data-value="에메랄드4">에메랄드4</div>
+            <div class="tier-option" data-value="플래티넘1">플래티넘1</div>
+            <div class="tier-option" data-value="플래티넘2">플래티넘2</div>
+            <div class="tier-option" data-value="플래티넘3">플래티넘3</div>
+            <div class="tier-option" data-value="플래티넘4">플래티넘4</div>
+            <div class="tier-option" data-value="골드1">골드1</div>
+            <div class="tier-option" data-value="골드2">골드2</div>
+            <div class="tier-option" data-value="골드3">골드3</div>
+            <div class="tier-option" data-value="골드4">골드4</div>
+            <div class="tier-option" data-value="실버1">실버1</div>
+            <div class="tier-option" data-value="실버2">실버2</div>
+            <div class="tier-option" data-value="실버3">실버3</div>
+            <div class="tier-option" data-value="실버4이하">실버4이하</div>
+          </div>
+        </div>
+        <select id="line">
+          <option value="">라인 선택</option>
+          <option>탑</option><option>정글</option><option>미드</option><option>원딜</option><option>서폿</option>
+        </select>
+        <div id="championInputBox" class="champion-search-box">
+          <input id="championSearch" type="text" placeholder="챔피언 검색" autocomplete="off" />
+          <div id="championDropdown" class="champion-dropdown"></div>
+        </div>
+        <button id="registerButton" onclick="addPlayerFromInput()">선수 추가</button>
+      </div>
+
+      <div class="saved-player-panel">  
+        <h3>저장된 닉네임으로 선수 추가</h3>
+        <div class="nickname-db-grid">
+          <div class="nickname-search-box">
+            <input id="nicknameSearch" type="text" placeholder="저장된 닉네임 검색 예: Faker" autocomplete="off" />
+            <div id="nicknameDropdown" class="nickname-dropdown"></div>
+          </div>
+          <button onclick="addSavedPlayerFromNickname()">닉네임으로 추가</button>
+        </div>
+        <div class="db-count">저장된 선수 DB: <span id="dbCount">0</span>명</div>
+      </div>
+    </div>
+
+    <div id="tab-player-list" class="section">
+      <h2 id="listTitle">2. 선수 카드 명단</h2>
+      <div class="player-count">현재 등록 인원: <span id="count">0</span>명</div>
+      <div class="action-row" style="margin-bottom:16px;">
+        <button id="undoPlayerListButton" class="sub-button" onclick="undoPlayerListChange()" title="되돌리기" disabled>↩ 되돌리기</button>
+        <button class="sub-button" onclick="clearAll()">현재 명단 초기화</button>
+      </div>
+      <div id="playerList" class="card-list"></div>
+    </div>
+
+    <div id="tab-match-team" class="section">
+      <h2 id="matchTitle">3. 밸런스 내전표 매칭 결과</h2>
+      <div id="teamResult">
+        <div class="empty-message">등록된 선수가 있으면 내전표 탭에서 바로 팀을 확인할 수 있습니다.</div>
+      </div>
+    </div>
+
+    <div id="tab-banpick" class="section">
+      <h2>5. 실시간 토너먼트 드래프트 밴픽</h2>
+      
+      <div class="draft-container">
+        <div class="draft-top">
+          <div class="draft-info-block">
+            <div id="draftPhaseText" class="draft-phase">밴픽 시작 대기 중</div>
+            <div id="draftStatusText" class="draft-status-text">챔피언을 선택하면 순서대로 등록됩니다.</div>
+          </div>
+          <div class="draft-controls-row">
+            <button class="sub-button" style="background:#2c6b4e;" onclick="undoDraftTurn()">이전 차례로</button>
+            <button id="draftNoBanButton" class="sub-button" onclick="noBanDraftTurn()">노밴</button>
+            <button id="draftSaveImageButton" class="sub-button draft-save-button" onclick="saveDraftAsImage()" disabled>이미지 저장</button>
+            <button class="sub-button" style="background:#8c2336;" onclick="resetDraftInfo()">초기화</button>
+          </div>
+        </div>
+
+        <div class="draft-board">
+          <div class="draft-side blue">
+            <h3>BLUE TEAM</h3>
+            
+            <div class="ban-row-wrapper">
+              <div class="ban-slot-new" id="blue-ban-0"><span class="slot-num">1</span></div>
+              <div class="ban-slot-new" id="blue-ban-1"><span class="slot-num">2</span></div>
+              <div class="ban-slot-new" id="blue-ban-2"><span class="slot-num">3</span></div>
+              <div class="ban-slot-new" id="blue-ban-3"><span class="slot-num">7</span></div>
+              <div class="ban-slot-new" id="blue-ban-4"><span class="slot-num">8</span></div>
+            </div>
+
+            <div class="pick-list-new">
+              <div class="pick-slot-new" id="blue-pick-0">
+                <div class="slot-img-box"><img id="blue-img-0" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">1 PICK</div><div class="champ-name-display" id="blue-name-0">-</div></div>
+              </div>
+              <div class="pick-slot-new" id="blue-pick-1">
+                <div class="slot-img-box"><img id="blue-img-1" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">2 PICK</div><div class="champ-name-display" id="blue-name-1">-</div></div>
+              </div>
+              <div class="pick-slot-new" id="blue-pick-2">
+                <div class="slot-img-box"><img id="blue-img-2" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">3 PICK</div><div class="champ-name-display" id="blue-name-2">-</div></div>
+              </div>
+              <div class="pick-slot-new" id="blue-pick-3">
+                <div class="slot-img-box"><img id="blue-img-3" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">4 PICK</div><div class="champ-name-display" id="blue-name-3">-</div></div>
+              </div>
+              <div class="pick-slot-new" id="blue-pick-4">
+                <div class="slot-img-box"><img id="blue-img-4" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">5 PICK</div><div class="champ-name-display" id="blue-name-4">-</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="draft-center-area">
+            <div class="draft-search-row">
+              <input type="text" id="draftChampSearch" placeholder="선택할 챔피언 검색..." oninput="filterDraftChampions()" autocomplete="off" />
+            </div>
+            <div class="champ-grid-new" id="draftChampGrid">
+              </div>
+          </div>
+
+          <div class="draft-side red">
+            <h3>RED TEAM</h3>
+            
+            <div class="ban-row-wrapper">
+              <div class="ban-slot-new" id="red-ban-0"><span class="slot-num">4</span></div>
+              <div class="ban-slot-new" id="red-ban-1"><span class="slot-num">5</span></div>
+              <div class="ban-slot-new" id="red-ban-2"><span class="slot-num">6</span></div>
+              <div class="ban-slot-new" id="red-ban-3"><span class="slot-num">9</span></div>
+              <div class="ban-slot-new" id="red-ban-4"><span class="slot-num">10</span></div>
+            </div>
+
+            <div class="pick-list-new">
+              <div class="pick-slot-new" id="red-pick-0">
+                <div class="slot-img-box"><img id="red-img-0" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">1 PICK</div><div class="champ-name-display" id="red-name-0">-</div></div>
+              </div>
+              <div class="pick-slot-new" id="red-pick-1">
+                <div class="slot-img-box"><img id="red-img-1" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">2 PICK</div><div class="champ-name-display" id="red-name-1">-</div></div>
+              </div>
+              <div class="pick-slot-new" id="red-pick-2">
+                <div class="slot-img-box"><img id="red-img-2" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">3 PICK</div><div class="champ-name-display" id="red-name-2">-</div></div>
+              </div>
+              <div class="pick-slot-new" id="red-pick-3">
+                <div class="slot-img-box"><img id="red-img-3" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">4 PICK</div><div class="champ-name-display" id="red-name-3">-</div></div>
+              </div>
+              <div class="pick-slot-new" id="red-pick-4">
+                <div class="slot-img-box"><img id="red-img-4" src="" style="display:none;"/></div>
+                <div class="slot-info"><div class="lane-title">5 PICK</div><div class="champ-name-display" id="red-name-4">-</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-fun" class="section">
+      <h2>4. 놀이탭</h2>
+      <div class="fun-grid">
+        <button class="fun-btn" onclick="randomPunishment()"><span class="icon">☠️</span><span>패배팀 벌칙 뽑기</span></button>
+        <button class="fun-btn" onclick="randomPersonalMission()"><span class="icon">🧍</span><span>개인 미션 뽑기</span></button>
+        <button class="fun-btn" onclick="randomTeamMission()"><span class="icon">👥</span><span>팀 미션 뽑기</span></button>
+        <button class="fun-btn" onclick="randomGlobalMission()"><span class="icon">🌐</span><span>전체 미션 뽑기</span></button>
+      </div>
+      <div class="fun-box" id="funText">버튼을 눌러 미션이나 벌칙을 뽑아보세요!</div>
+    </div>
+  </div>
+
+  <script>
+    const SAVE_KEY = "lol_inhouse_mode_transform_save_data";
+    const PLAYER_DB_API = "/api/player-db";
+    const PLAYER_DB_FALLBACK_KEY = "teamgg_player_db_fallback";
+    let playerDbUsesServer = true;
+
+    const players = [];
+    const playerDB = [];
+    let blueTeam = [];
+    let redTeam = [];
+    let arenaTeams = [];
+    let currentMode = "classic";
+    let selectedChampion = "";
+    let selectedSavedPlayer = null;
+    let dragTeam = "";
+    let dragIndex = null;
+    let targetTeam = "";
+    let targetIndex = null;
+    let isLoading = false;
+    const deletedPlayerUndoStack = [];
+
+    const preBanData = { blueChamp: "", blueSpell: "", redChamp: "", redSpell: "" };
+
+    /* ================= 6번 밴픽 전용 변수 및 데이터 구조 (공식 드래프트 룰 순서 정상화) ================= */
+    const draftSequence = [
+      { type: 'ban', team: 'blue', index: 0, label: '블루 1번째 밴' },
+      { type: 'ban', team: 'red', index: 0, label: '레드 1번째 밴' },
+      { type: 'ban', team: 'blue', index: 1, label: '블루 2번째 밴' },
+      { type: 'ban', team: 'red', index: 1, label: '레드 2번째 밴' },
+      { type: 'ban', team: 'blue', index: 2, label: '블루 3번째 밴' },
+      { type: 'ban', team: 'red', index: 2, label: '레드 3번째 밴' },
+      
+      { type: 'pick', team: 'blue', index: 0, label: '블루 1번째 픽' },
+      { type: 'pick', team: 'red', index: 0, label: '레드 1번째 픽' },
+      { type: 'pick', team: 'red', index: 1, label: '레드 2번째 픽' },
+      { type: 'pick', team: 'blue', index: 1, label: '블루 2번째 픽' },
+      { type: 'pick', team: 'blue', index: 2, label: '블루 3번째 픽' },
+      { type: 'pick', team: 'red', index: 2, label: '레드 3번째 픽' },
+      
+      { type: 'ban', team: 'red', index: 3, label: '레드 4번째 밴' },
+      { type: 'ban', team: 'blue', index: 3, label: '블루 4번째 밴' },
+      { type: 'ban', team: 'red', index: 4, label: '레드 5번째 밴' },
+      { type: 'ban', team: 'blue', index: 4, label: '블루 5번째 밴' },
+      
+      { type: 'pick', team: 'red', index: 3, label: '레드 4번째 픽' },
+      { type: 'pick', team: 'blue', index: 3, label: '블루 4번째 픽' },
+      { type: 'pick', team: 'blue', index: 4, label: '블루 5번째 픽' },
+      { type: 'pick', team: 'red', index: 4, label: '레드 5번째 픽' }
+    ];
+    
+    let currentDraftStep = 0;
+    let draftPickDragInfo = null;
+    let draftSelections = {
+      blue: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] },
+      red: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] }
+    };
+
+const championList = [
+      "가렌", "갈리오", "갱플랭크", "그라가스", "그레이브즈", "그웬", "나르", "나미", "나서스", "나피리",
+      "노틸러스", "녹턴", "누누와 윌럼프", "니달리", "니코", "닐라", "다리우스", "다이애나", "드레이븐",
+      "라이즈", "라칸", "람머스", "럭스", "럼블", "레나타 글라스크", "레넥톤", "레오나", "렉사이", "렐",
+      "렝가", "루시안", "룰루", "르블랑", "리 신", "리븐", "리산드라", "릴리아", "마스터 이", "마오카이",
+      "말자하", "말파이트", "멜", "모데카이저", "모르가나", "문도 박사", "미스 포츈", "밀리오", "바드",
+      "바루스", "바이", "베이가", "베인", "벡스", "벨베스", "벨코즈", "볼리베어", "브라움", "브라이어",
+      "브랜드", "블라디미르", "블리츠크랭크", "비에고", "빅토르", "뽀삐", "사미라", "사이온", "사일러스",
+      "샤코", "세나", "세라핀", "세주아니", "세트", "소나", "소라카", "쉔", "쉬바나", "스몰더", "스웨인",
+      "스카너", "시비르", "신 짜오", "신드라", "신지드", "쓰레쉬", "아리", "아무무", "아우렐리온 솔",
+      "아이번", "아지르", "아칼리", "아크샨", "아트록스", "아펠리오스", "알리스타", "암베사", "애니",
+      "애니비아", "애쉬", "야스오", "에코", "엘리스", "오공", "오로라", "오른", "오리아나", "올라프",
+      "요네", "요릭", "우디르", "우르곳", "워윅", "유나라", "유미", "이렐리아", "이블린", "이즈리얼",
+      "일라오이", "자르반 4세", "자야", "자이라", "자크", "자헨", "잔나", "잭스", "제드", "제라스",
+      "제리", "제이스", "조이", "직스", "진", "질리언", "징크스", "초가스", "카르마", "카밀",
+      "카사딘", "카서스", "카시오페아", "카이사", "카직스", "카타리나", "칼리스타", "케넨", "케이틀린",
+      "케인", "케일", "코그모", "코르키", "퀸", "크산테", "클레드", "키아나", "킨드레드", "타릭",
+      "탈론", "탈리야", "탐 켄치", "트런들", "트리스타나", "트린다미어", "트위스티드 페이트", "트위치",
+      "티모", "파이크", "판테온", "피들스틱", "피오라", "피즈", "하이머딩거", "헤카림", "흐웨이"
+    ];
+
+const scoreTable = {
+      "챌린저": {"탑": 80, "정글": 81, "미드": 76, "원딜": 79, "서폿": 74},
+      "그랜드마스터": {"탑": 75, "정글": 76, "미드": 71, "원딜": 74, "서폿": 69},
+      "마스터 1000점이상": {"탑": 70, "정글": 71, "미드": 67, "원딜": 70, "서폿": 65},
+      "마스터 900~999점": {"탑": 68, "정글": 69, "미드": 65, "원딜": 68, "서폿": 63},
+      "마스터 800~899점": {"탑": 66, "정글": 67, "미드": 63, "원딜": 66, "서폿": 61},
+      "마스터 700~799점": {"탑": 64, "정글": 65, "미드": 61, "원딜": 64, "서폿": 59},
+      "마스터 600~699점": {"탑": 61, "정글": 62, "미드": 58, "원딜": 61, "서폿": 56},
+      "마스터 500~599점": {"탑": 59, "정글": 60, "미드": 56, "원딜": 59, "서폿": 54},
+      "마스터 400~499점": {"탑": 57, "정글": 58, "미드": 54, "원딜": 57, "서폿": 52},
+      "마스터 300~399점": {"탑": 55, "정글": 56, "미드": 52, "원딜": 55, "서폿": 49},
+      "마스터 200~299점": {"탑": 51, "정글": 52, "미드": 49, "원딜": 52, "서폿": 47},
+      "마스터 100~199점": {"탑": 49, "정글": 50, "미드": 47, "원딜": 50, "서폿": 45},
+      "마스터 0~99점": {"탑": 47, "정글": 48, "미드": 45, "원딜": 48, "서폿": 43},
+      "다이아1": {"탑": 43, "정글": 44, "미드": 41, "원딜": 44, "서폿": 39},
+      "다이아2": {"탑": 40, "정글": 41, "미드": 39, "원딜": 42, "서폿": 37},
+      "다이아3": {"탑": 38, "정글": 39, "미드": 37, "원딜": 40, "서폿": 36},
+      "다이아4": {"탑": 36, "정글": 37, "미드": 36, "원딜": 37, "서폿": 35},
+      "에메랄드1": {"탑": 34, "정글": 34, "미드": 33, "원딜": 34, "서폿": 34},
+      "에메랄드2": {"탑": 32, "정글": 32, "미드": 32, "원딜": 32, "서폿": 33},
+      "에메랄드3": {"탑": 31, "정글": 31, "미드": 30, "원딜": 30, "서폿": 32},
+      "에메랄드4": {"탑": 29, "정글": 29, "미드": 29, "원딜": 28, "서폿": 32},
+      "플래티넘1": {"탑": 27, "정글": 26, "미드": 26, "원딜": 25, "서폿": 31},
+      "플래티넘2": {"탑": 26, "정글": 24, "미드": 24, "원딜": 23, "서폿": 30},
+      "플래티넘3": {"탑": 25, "정글": 23, "미드": 23, "원딜": 22, "서폿": 29},
+      "플래티넘4": {"탑": 24, "정글": 22, "미드": 22, "원딜": 21, "서폿": 28},
+      "골드1": {"탑": 22, "정글": 19, "미드": 19, "원딜": 18, "서폿": 27},
+      "골드2": {"탑": 21, "정글": 18, "미드": 18, "원딜": 17, "서폿": 26},
+      "골드3": {"탑": 20, "정글": 17, "미드": 17, "원딜": 16, "서폿": 25},
+      "골드4": {"탑": 19, "정글": 16, "미드": 16, "원딜": 15, "서폿": 24},
+      "실버1": {"탑": 17, "정글": 14, "미드": 14, "원딜": 13, "서폿": 23},
+      "실버2": {"탑": 16, "정글": 13, "미드": 13, "원딜": 12, "서폿": 22},
+      "실버3": {"탑": 15, "정글": 12, "미드": 12, "원딜": 11, "서폿": 21},
+      "실버4이하": {"탑": 13, "정글": 11, "미드": 11, "원딜": 10, "서폿": 20}
+    };
+
+const scoreTableARAM = {
+      "챌린저": 80, "그랜드마스터": 75,
+      "마스터 1000점이상": 70, "마스터 900~999점": 68, "마스터 800~899점": 66,
+      "마스터 700~799점": 64, "마스터 600~699점": 60, "마스터 500~599점": 58,
+      "마스터 400~499점": 56, "마스터 300~399점": 53, "마스터 200~299점": 50,
+      "마스터 100~199점": 48, "마스터 0~99점": 46,
+      "다이아1": 43, "다이아2": 41, "다이아3": 39, "다이아4": 37,
+      "에메랄드1": 34, "에메랄드2": 32, "에메랄드3": 31, "에메랄드4": 29,
+      "플래티넘1": 27, "플래티넘2": 25, "플래티넘3": 24, "플래티넘4": 23,
+      "골드1": 21, "골드2": 19, "골드3": 18, "골드4": 17,
+      "실버1": 15, "실버2": 14, "실버3": 13, "실버4이하": 11
+    };
+
+const punishments = [
+      "패배팀 전원 단체 다음 게임에서 존댓말만 하기",
+      "패배팀 전원 승리팀에게 음료수 사주기",
+      "패배팀 전원 다음 게임 닉네임 앞에 '패배자' 붙이기",
+      "패배팀 전원 엽사 찍어 올리기",
+      "패배팀 전원 승리팀 칭찬 3개씩 하기",
+      "패배팀 전원 다음 게임에서 전에 한 라인 금지",
+      "패배팀 전원 다음 게임 죽을 때 마다 상대에게 칭찬하기"
+    ];
+
+const personalMissions = [
+      "장화 구매 금지(2티어 신발은 가능)", "팀 내 첫번째 킬 하기", "데스 5회 이하 유지하기", "킬 관여율 50% 이상",
+      "라인전 중, 상대에게 한 번 이상 죽기", "아무 포탑 부수기", "바위게 공격하지 않기", "상대 진영 정글몹 하나 이상 먹기",
+      "궁극기로 킬 만들기", "시야점수 팀 내 1등"
+    ];
+
+const teamMissions = [
+      "모든 라이너가 상대 라이너 한 번 이상 잡기", "팀 전원 점멸 스펠 금지", "20분 전까진 와드 설치 금지",
+      "미드 갱 없이하기", "쌍둥이 포탑이 파괴될 시, 패배", "팀 전체 데스 30회 이하", "첫 유충 먹기 (실패 시, 서렌)"
+    ];
+
+const globalMissions = [
+      "모든 플레이어 기본템 제외 1데스 후 아이템 구매 가능", "킬 후 채팅으로 '나이스' 입력",
+      "양 팀 탑 유저끼리 팀 개입 없이 만나자마자 1대1로 싸우기", "모든 플레이어 드래곤 처치 금지",
+      "모든 플레이어가 와드 5개 이상 설치", "모든 플레이어 바론 처치 금지", "핑 찍기 없이 게임하기"
+    ];
+
+
+    const modeMeta = {
+      classic: {
+        title: "LOL 내전 통합 생성기",
+        registerTitle: "1. 협곡 선수 등록",
+        savedTitle: "협곡 저장 선수 불러오기",
+        listTitle: "2. 협곡 등록 명단",
+        matchTitle: "3. 소환사의 협곡 내전표",
+        buttonText: "협곡 선수 추가"
+      },
+      aram: {
+        title: "칼바람 나락 내전 생성기",
+        registerTitle: "1. 칼바람 선수 등록",
+        savedTitle: "칼바람 저장 선수 불러오기",
+        listTitle: "2. 칼바람 등록 명단",
+        matchTitle: "3. 칼바람 나락 내전표",
+        buttonText: "칼바람 선수 추가"
+      },
+      arena: {
+        title: "아레나 내전 생성기",
+        registerTitle: "1. 아레나 참가자 등록",
+        savedTitle: "아레나 저장 선수 불러오기",
+        listTitle: "2. 아레나 참가 명단",
+        matchTitle: "3. 아레나 3인 팀 매칭 결과",
+        buttonText: "아레나 참가자 추가"
+      }
+    };
+
+    function getCurrentMeta() { return modeMeta[currentMode]; }
+    function normalizeSearchText(text) { return String(text || "").trim().replaceAll(" ", "").toLowerCase(); }
+
+    const hangulInitials = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+    function getHangulInitialText(text) {
+      return String(text || "").split("").map(char => {
+        const code = char.charCodeAt(0) - 44032;
+        if (code < 0 || code > 11171) return char;
+        return hangulInitials[Math.floor(code / 588)] || char;
+      }).join("");
+    }
+    function normalizeSmartSearchText(text) {
+      return String(text || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[\s\-_.']/g, "");
+    }
+    function includesSmartSearch(target, keyword, aliases = []) {
+      const normalizedKeyword = normalizeSmartSearchText(keyword);
+      if (!normalizedKeyword) return true;
+      const candidates = [target, getHangulInitialText(target), ...aliases];
+      return candidates.some(candidate => normalizeSmartSearchText(candidate).includes(normalizedKeyword));
+    }
+
+    const championEnglishAliases = {
+      "가렌": ["garen"], "갈리오": ["galio"], "갱플랭크": ["gangplank", "gp"], "그라가스": ["gragas"], "그레이브즈": ["graves"], "그웬": ["gwen"],
+      "나르": ["gnar"], "나미": ["nami"], "나서스": ["nasus"], "나피리": ["naafiri"], "노틸러스": ["nautilus"], "녹턴": ["nocturne"], "누누와 윌럼프": ["nunu", "nunuandwillump"], "니달리": ["nidalee"], "니코": ["neeko"], "닐라": ["nilah"],
+      "다리우스": ["darius"], "다이애나": ["diana"], "드레이븐": ["draven"], "라이즈": ["ryze"], "라칸": ["rakan"], "람머스": ["rammus"], "럭스": ["lux"], "럼블": ["rumble"], "레나타 글라스크": ["renata", "renataglasc"], "레넥톤": ["renekton"], "레오나": ["leona"], "렉사이": ["reksai", "rek sai"], "렐": ["rell"],
+      "렝가": ["rengar"], "루시안": ["lucian"], "룰루": ["lulu"], "르블랑": ["leblanc", "lb"], "리 신": ["leesin", "lee"], "리븐": ["riven"], "리산드라": ["lissandra"], "릴리아": ["lillia"], "마스터 이": ["masteryi", "yi"], "마오카이": ["maokai"],
+      "말자하": ["malzahar"], "말파이트": ["malphite"], "멜": ["mel"], "모데카이저": ["mordekaiser", "morde"], "모르가나": ["morgana"], "문도 박사": ["drmundo", "mundo"], "미스 포츈": ["missfortune", "mf"], "밀리오": ["milio"], "바드": ["bard"],
+      "바루스": ["varus"], "바이": ["vi"], "베이가": ["veigar"], "베인": ["vayne"], "벡스": ["vex"], "벨베스": ["belveth", "bel veth"], "벨코즈": ["velkoz", "vel koz"], "볼리베어": ["volibear"], "브라움": ["braum"], "브라이어": ["briar"],
+      "브랜드": ["brand"], "블라디미르": ["vladimir", "vlad"], "블리츠크랭크": ["blitzcrank", "blitz"], "비에고": ["viego"], "빅토르": ["viktor"], "뽀삐": ["poppy"], "사미라": ["samira"], "사이온": ["sion"], "사일러스": ["sylas"],
+      "샤코": ["shaco"], "세나": ["senna"], "세라핀": ["seraphine"], "세주아니": ["sejuani", "sej"], "세트": ["sett"], "소나": ["sona"], "소라카": ["soraka"], "쉔": ["shen"], "쉬바나": ["shyvana"], "스몰더": ["smolder"], "스웨인": ["swain"],
+      "스카너": ["skarner"], "시비르": ["sivir"], "신 짜오": ["xinzhao", "xin"], "신드라": ["syndra"], "신지드": ["singed"], "쓰레쉬": ["thresh"], "아리": ["ahri"], "아무무": ["amumu"], "아우렐리온 솔": ["aurelionsol", "asol"],
+      "아이번": ["ivern"], "아지르": ["azir"], "아칼리": ["akali"], "아크샨": ["akshan"], "아트록스": ["aatrox"], "아펠리오스": ["aphelios"], "알리스타": ["alistar"], "암베사": ["ambessa"], "애니": ["annie"],
+      "애니비아": ["anivia"], "애쉬": ["ashe"], "야스오": ["yasuo"], "에코": ["ekko"], "엘리스": ["elise"], "오공": ["wukong", "monkeyking"], "오로라": ["aurora"], "오른": ["ornn"], "오리아나": ["orianna", "ori"], "올라프": ["olaf"],
+      "요네": ["yone"], "요릭": ["yorick"], "우디르": ["udyr"], "우르곳": ["urgot"], "워윅": ["warwick", "ww"], "유나라": ["yunara"], "유미": ["yuumi"], "이렐리아": ["irelia"], "이블린": ["evelynn", "eve"], "이즈리얼": ["ezreal", "ez"],
+      "일라오이": ["illaoi"], "자르반 4세": ["jarvaniv", "jarvan", "j4"], "자야": ["xayah"], "자이라": ["zyra"], "자크": ["zac"], "자헨": ["zahen", "zaahen"], "잔나": ["janna"], "잭스": ["jax"], "제드": ["zed"], "제라스": ["xerath"],
+      "제리": ["zeri"], "제이스": ["jayce"], "조이": ["zoe"], "직스": ["ziggs"], "진": ["jhin"], "질리언": ["zilean"], "징크스": ["jinx"], "초가스": ["chogath", "cho"], "카르마": ["karma"], "카밀": ["camille"],
+      "카사딘": ["kassadin"], "카서스": ["karthus"], "카시오페아": ["cassiopeia", "cass"], "카이사": ["kaisa", "kai sa"], "카직스": ["khazix", "kha zix"], "카타리나": ["katarina", "kat"], "칼리스타": ["kalista"], "케넨": ["kennen"], "케이틀린": ["caitlyn", "cait"],
+      "케인": ["kayn"], "케일": ["kayle"], "코그모": ["kogmaw", "kog maw"], "코르키": ["corki"], "퀸": ["quinn"], "크산테": ["ksante", "k sante"], "클레드": ["kled"], "키아나": ["qiyana"], "킨드레드": ["kindred"], "타릭": ["taric"],
+      "탈론": ["talon"], "탈리야": ["taliyah"], "탐 켄치": ["tahmkench", "tahm"], "트런들": ["trundle"], "트리스타나": ["tristana", "trist"], "트린다미어": ["tryndamere", "trynd"], "트위스티드 페이트": ["twistedfate", "tf"], "트위치": ["twitch"],
+      "티모": ["teemo"], "파이크": ["pyke"], "판테온": ["pantheon", "panth"], "피들스틱": ["fiddlesticks", "fiddle"], "피오라": ["fiora"], "피즈": ["fizz"], "하이머딩거": ["heimerdinger", "heimer"], "헤카림": ["hecarim"], "흐웨이": ["hwei"]
+    };
+
+    function getSortedChampions() {
+      return [...championList].sort((a, b) => a.localeCompare(b, "ko"));
+    }
+    function getFilteredChampions(keyword = "") {
+      return getSortedChampions().filter(champion => includesSmartSearch(champion, keyword, championEnglishAliases[champion] || []));
+    }
+    function getAvailableSavedPlayers() {
+      const registeredNicknames = new Set(players.map(player => normalizeSearchText(player.nickname)));
+      return [...playerDB]
+        .filter(player => !registeredNicknames.has(normalizeSearchText(player.nickname)))
+        .sort((a, b) => String(a.nickname || "").localeCompare(String(b.nickname || ""), "ko", { numeric: true, sensitivity: "base" }));
+    }
+    function getFilteredSavedPlayers(keyword = "") {
+      return getAvailableSavedPlayers().filter(player => includesSmartSearch(player.nickname, keyword));
+    }
+
+    function normalizeChampion(champion) {
+      const value = String(champion || "").trim().replaceAll(" ", "");
+      return championList.find(name => name.replaceAll(" ", "") === value) || String(champion || "").trim();
+    }
+    function getRandomChampion() { return championList[Math.floor(Math.random() * championList.length)]; }
+    function getChampionImage(champion) { return `images/${encodeURIComponent(champion)}.webp`; }
+    function calculateArenaScore(tier) { return scoreTableARAM[tier] || 0; }
+    function calculateScore(tier, line) {
+      if (line === "칼바람" || line === "아레나") return scoreTableARAM[tier] || 0;
+      if (!scoreTable[tier]) return 0;
+      return scoreTable[tier][line] || 0;
+    }
+    function sanitizePlayer(player) {
+      return {
+        nickname: String(player?.nickname || "").trim(),
+        tier: String(player?.tier || "").trim(),
+        line: String(player?.line || "").trim(),
+        champion: String(player?.champion || "").trim(),
+        score: Number(player?.score) || 0
+      };
+    }
+
+    function getTierNames() { return Object.keys(scoreTable); }
+    function getClassicLineNames() { return ["탑", "정글", "미드", "원딜", "서폿"]; }
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+    function renderInlineEditDropdown(teamKey, index, field, value, options, handlerName = "updateTeamPlayerField", placeholder = "선택") {
+      const currentValue = value && options.includes(value) ? value : "";
+      const label = currentValue || placeholder;
+      const optionItems = options.map(name => `
+        <div class="inline-option" onclick="${handlerName}('${teamKey}', ${index}, '${field}', '${escapeHtml(name)}'); closeInlineDropdowns();">${escapeHtml(name)}</div>
+      `).join("");
+
+      return `
+        <div class="inline-edit" onclick="event.stopPropagation();">
+          <button type="button" class="inline-edit-button ${currentValue ? "" : "placeholder"}" onclick="toggleInlineDropdown(this)">${escapeHtml(label)}</button>
+          <div class="inline-dropdown">${optionItems}</div>
+        </div>
+      `;
+    }
+
+    function renderTierEditSelect(teamKey, index, tier, handlerName = "updateTeamPlayerField") {
+      return renderInlineEditDropdown(teamKey, index, "tier", tier, getTierNames(), handlerName, "티어 선택");
+    }
+    function renderLineEditSelect(teamKey, index, line) {
+      return renderInlineEditDropdown(teamKey, index, "line", line, getClassicLineNames(), "updateTeamPlayerField", "라인 선택");
+    }
+
+    function loadPlayerDBFromFallback() {
+      try {
+        const saved = localStorage.getItem(PLAYER_DB_FALLBACK_KEY);
+        const parsed = saved ? JSON.parse(saved) : [];
+        playerDB.length = 0;
+        if (Array.isArray(parsed)) parsed.forEach(player => playerDB.push(sanitizePlayer(player)));
+      } catch (error) {
+        console.error("로컬 선수 DB를 불러오지 못했습니다.", error);
+        playerDB.length = 0;
+      }
+      renderPlayerDBCount();
+    }
+
+    function savePlayerDBToFallback() {
+      try {
+        localStorage.setItem(PLAYER_DB_FALLBACK_KEY, JSON.stringify(playerDB.map(sanitizePlayer)));
+      } catch (error) {
+        console.error("로컬 선수 DB 저장 실패", error);
+      }
+    }
+
+    async function loadPlayerDBFromServer() {
+      try {
+        const response = await fetch(PLAYER_DB_API, { cache: "no-store" });
+        if (!response.ok) throw new Error("선수 DB를 불러오지 못했습니다.");
+        const savedPlayers = await response.json();
+        playerDbUsesServer = true;
+        playerDB.length = 0;
+        if (Array.isArray(savedPlayers)) savedPlayers.forEach(player => playerDB.push(sanitizePlayer(player)));
+        renderPlayerDBCount();
+      } catch (error) {
+        playerDbUsesServer = false;
+        console.warn("서버 선수 DB를 사용할 수 없어 브라우저 로컬 DB로 전환합니다. GitHub Pages만 쓰면 DB는 사용자 브라우저에만 저장됩니다.", error);
+        loadPlayerDBFromFallback();
+      }
+    }
+
+    async function savePlayerToServer(player) {
+      const sanitizedPlayer = sanitizePlayer(player);
+      if (!playerDbUsesServer) {
+        upsertPlayerDB(sanitizedPlayer);
+        savePlayerDBToFallback();
+        renderPlayerDBCount();
+        return;
+      }
+
+      try {
+        const response = await fetch(PLAYER_DB_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(sanitizedPlayer)
+        });
+        if (!response.ok) throw new Error("선수 정보를 서버에 저장하지 못했습니다.");
+        const result = await response.json();
+        playerDB.length = 0;
+        if (Array.isArray(result.players)) result.players.forEach(savedPlayer => playerDB.push(sanitizePlayer(savedPlayer)));
+        else upsertPlayerDB(sanitizedPlayer);
+        renderPlayerDBCount();
+      } catch (error) {
+        playerDbUsesServer = false;
+        console.warn("서버 선수 DB 저장에 실패해 브라우저 로컬 DB로 저장합니다.", error);
+        upsertPlayerDB(sanitizedPlayer);
+        savePlayerDBToFallback();
+        renderPlayerDBCount();
+      }
+    }
+
+    function clonePlayerListState() {
+      return players.map(player => ({ ...player }));
+    }
+
+    function pushDeletedPlayerUndoEntry(entry) {
+      if (isLoading || !entry) return;
+      deletedPlayerUndoStack.push(entry);
+      if (deletedPlayerUndoStack.length > 30) deletedPlayerUndoStack.shift();
+      updateUndoButtonState();
+    }
+
+    function pushPlayerUndoSnapshot() {
+      // 되돌리기는 삭제 복구 전용이다. 정보 수정/추가는 기록하지 않는다.
+      updateUndoButtonState();
+    }
+
+    function updateUndoButtonState() {
+      const undoButton = document.getElementById("undoPlayerListButton");
+      if (undoButton) undoButton.disabled = deletedPlayerUndoStack.length === 0;
+    }
+
+    function undoPlayerListChange() {
+      const lastDeleted = deletedPlayerUndoStack.pop();
+      if (!lastDeleted) return;
+
+      const restorePlayers = Array.isArray(lastDeleted.players) ? lastDeleted.players : [lastDeleted.player];
+      const insertIndex = Math.max(0, Math.min(players.length, Number.isInteger(lastDeleted.index) ? lastDeleted.index : players.length));
+
+      restorePlayers
+        .filter(Boolean)
+        .map(player => sanitizePlayer(player))
+        .forEach((player, offset) => {
+          const alreadyExists = players.some(existing => normalizeSearchText(existing.nickname) === normalizeSearchText(player.nickname));
+          if (!alreadyExists) players.splice(insertIndex + offset, 0, player);
+        });
+
+      resetTeams();
+      renderPlayers();
+      renderPlayerDBCount();
+      saveData();
+      updateUndoButtonState();
+    }
+
+    function saveData() {
+      if (isLoading) return;
+      const activeSection = document.querySelector(".section.active");
+      const activeTab = activeSection ? activeSection.id : "tab-player-register";
+      const data = { players, blueTeam, redTeam, arenaTeams, activeTab, currentMode, currentDraftStep, draftSelections };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    }
+
+    function loadData() {
+      const saved = localStorage.getItem(SAVE_KEY);
+      if (!saved) { renderAll(); updateUndoButtonState(); return; }
+      try {
+        const data = JSON.parse(saved);
+        currentMode = data.currentMode || "classic";
+        players.length = 0;
+        if (Array.isArray(data.players)) data.players.forEach(player => players.push(sanitizePlayer(player)));
+        blueTeam = Array.isArray(data.blueTeam) ? data.blueTeam.map(sanitizePlayer) : [];
+        redTeam = Array.isArray(data.redTeam) ? data.redTeam.map(sanitizePlayer) : [];
+        arenaTeams = Array.isArray(data.arenaTeams) ? data.arenaTeams.map(team => Array.isArray(team) ? team.map(sanitizePlayer) : []) : [];
+        if (typeof data.currentDraftStep === "number") currentDraftStep = data.currentDraftStep;
+        if (data.draftSelections && data.draftSelections.blue && data.draftSelections.red) {
+          draftSelections = data.draftSelections;
+        }
+        renderAll();
+        deletedPlayerUndoStack.length = 0;
+        updateUndoButtonState();
+        const savedTab = data.activeTab === "tab-saved-player" ? "tab-player-register" : (data.activeTab || "tab-player-register");
+        switchTab(savedTab, false);
+      } catch (error) {
+        console.error(error);
+        localStorage.removeItem(SAVE_KEY);
+        renderAll();
+      }
+    }
+
+    function renderAll() {
+      applyModeUI();
+      renderPlayers();
+      renderPlayerDBCount();
+      const activeSection = document.querySelector(".section.active");
+      if (activeSection && activeSection.id === "tab-match-team") renderCurrentMatchTable();
+      if (activeSection && activeSection.id === "tab-banpick") initDraftCenterGrid();
+    }
+
+    function selectGameMode(mode) {
+      if (currentMode === mode) {
+        applyModeUI();
+        return;
+      }
+
+      currentMode = mode;
+      applyModeUI();
+      renderPlayers();
+      const activeSection = document.querySelector(".section.active");
+      if (activeSection && activeSection.id === "tab-match-team") renderCurrentMatchTable();
+      saveData();
+    }
+
+    function applyModeUI() {
+      document.body.classList.remove("mode-classic", "mode-aram", "mode-arena");
+      document.body.classList.add(`mode-${currentMode}`);
+      document.querySelectorAll(".mode-btn").forEach(button => button.classList.remove("active"));
+      const modeButton = document.getElementById(`mode-${currentMode}`);
+      if (modeButton) modeButton.classList.add("active");
+
+      const meta = getCurrentMeta();
+      document.getElementById("mainTitle").textContent = meta.title;
+      document.getElementById("registerTitle").textContent = meta.registerTitle;
+      const savedInlineTitle = document.querySelector(".saved-player-panel h3");
+      if (savedInlineTitle) savedInlineTitle.textContent = meta.savedTitle;
+      document.getElementById("listTitle").textContent = meta.listTitle;
+      document.getElementById("matchTitle").textContent = meta.matchTitle;
+      document.getElementById("registerButton").textContent = meta.buttonText;
+
+      const lineSelect = document.getElementById("line");
+      const championBox = document.getElementById("championInputBox");
+      const registerGrid = document.getElementById("registerGrid");
+      const championSearch = document.getElementById("championSearch");
+
+      if (currentMode === "classic") {
+        lineSelect.style.display = "block";
+        championBox.style.display = "block";
+        registerGrid.style.gridTemplateColumns = "1.2fr 1.25fr 1fr 1.35fr auto";
+        championSearch.placeholder = "챔피언 검색";
+      } else if (currentMode === "arena") {
+        lineSelect.style.display = "none";
+        championBox.style.display = "block";
+        registerGrid.style.gridTemplateColumns = "1.4fr 1.3fr 1.4fr auto";
+        championSearch.placeholder = "주 챔피언 검색";
+      } else {
+        lineSelect.style.display = "none";
+        championBox.style.display = "none";
+        registerGrid.style.gridTemplateColumns = "1.4fr 1.3fr auto";
+      }
+    }
+
+    function switchTab(tabId, shouldSave = true) {
+      if (tabId === "tab-saved-player") tabId = "tab-player-register";
+      document.querySelectorAll(".section").forEach(section => section.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(button => button.classList.remove("active"));
+      const section = document.getElementById(tabId);
+      if (!section) return;
+      section.classList.add("active");
+      const activeButton = document.getElementById(tabId.replace("tab-", "btn-"));
+      if (activeButton) activeButton.classList.add("active");
+      if (tabId === "tab-match-team") renderCurrentMatchTable();
+      if (tabId === "tab-banpick") initDraftCenterGrid();
+      if (shouldSave) saveData();
+    }
+
+    function renderCurrentMatchTable() {
+      if (currentMode === "arena") {
+        if (arenaTeams.length === 0) makeArenaTeams();
+        else renderArenaTeams(arenaTeams);
+        return;
+      }
+
+      if (blueTeam.length === 0 && redTeam.length === 0) makeTeams();
+      else renderTeams();
+    }
+
+    function addPlayerFromInput() {
+      const nickname = document.getElementById("nickname").value.trim();
+      const tier = document.getElementById("tier").value;
+      let line = document.getElementById("line").value;
+      let champion = selectedChampion || normalizeChampion(document.getElementById("championSearch").value.trim());
+
+      if (currentMode === "aram") { line = "칼바람"; champion = ""; }
+      if (currentMode === "arena") { line = "아레나"; }
+
+      const ok = addPlayer(nickname, tier, line, champion);
+      if (!ok) return;
+      document.getElementById("nickname").value = "";
+      document.getElementById("tier").value = "";
+      document.getElementById("line").value = "";
+      document.getElementById("championSearch").value = "";
+      selectedChampion = "";
+      alert(`${nickname} 선수가 등록되었습니다.`);
+    }
+
+    function addPlayer(nickname, tier, line, champion = "", shouldRender = true, allowIncompleteLine = false) {
+      if (!nickname || !tier || (!line && !allowIncompleteLine)) {
+        alert("필수 항목을 입력해주세요.");
+        return false;
+      }
+
+      let normalizedChampion = String(champion || "").trim();
+      if (currentMode === "classic" || currentMode === "arena") {
+        if (!normalizedChampion) {
+          alert(currentMode === "arena" ? "아레나 모드에서는 주 챔피언을 입력해주세요." : "협곡 모드에서는 챔피언을 입력해주세요.");
+          return false;
+        }
+        normalizedChampion = normalizeChampion(normalizedChampion);
+        if (!championList.includes(normalizedChampion)) {
+          alert("챔피언 이름이 올바르지 않습니다.");
+          return false;
+        }
+      } else if (normalizedChampion) {
+        normalizedChampion = normalizeChampion(normalizedChampion);
+      }
+
+      const score = calculateScore(tier, line);
+      if (score === 0 && !(allowIncompleteLine && currentMode === "classic")) {
+        alert("티어 또는 모드 점수 계산에 실패했습니다.");
+        return false;
+      }
+
+      const alreadyAdded = players.some(player => normalizeSearchText(player.nickname) === normalizeSearchText(nickname));
+      if (alreadyAdded) {
+        alert("이미 등록 명단에 있는 선수입니다.");
+        return false;
+      }
+
+      const playerData = {
+        nickname,
+        tier,
+        line,
+        champion: normalizedChampion,
+        score
+      };
+
+      players.push(playerData);
+      upsertPlayerDB(playerData);
+      savePlayerToServer(playerData);
+      resetTeams();
+
+      if (shouldRender) renderPlayers();
+      renderPlayerDBCount();
+      saveData();
+      return true;
+    }
+
+    function makeModePlayerFromSaved(savedPlayer) {
+      if (currentMode === "aram") {
+        return {
+          nickname: savedPlayer.nickname,
+          tier: savedPlayer.tier,
+          line: "칼바람",
+          champion: "",
+          score: calculateScore(savedPlayer.tier, "칼바람")
+        };
+      }
+
+      if (currentMode === "arena") {
+        return {
+          nickname: savedPlayer.nickname,
+          tier: savedPlayer.tier,
+          line: "아레나",
+          champion: savedPlayer.champion || "",
+          score: calculateScore(savedPlayer.tier, "아레나")
+        };
+      }
+
+      const player = sanitizePlayer(savedPlayer);
+      if (!getClassicLineNames().includes(player.line)) {
+        player.line = "";
+        player.score = 0;
+      } else {
+        player.score = calculateScore(player.tier, player.line);
+      }
+      return player;
+    }
+
+    function addSavedPlayerFromNickname() {
+      const input = document.getElementById("nicknameSearch");
+      const dropdown = document.getElementById("nicknameDropdown");
+      const keyword = normalizeSearchText(input.value);
+      if (!keyword && !selectedSavedPlayer) { alert("불러올 닉네임을 입력해주세요."); return; }
+      const savedPlayer = selectedSavedPlayer || playerDB.find(player => normalizeSearchText(player.nickname) === keyword) || playerDB.find(player => normalizeSearchText(player.nickname).includes(keyword));
+      if (!savedPlayer) { alert("저장된 선수 DB에서 해당 닉네임을 찾지 못했습니다."); return; }
+      const modePlayer = makeModePlayerFromSaved(savedPlayer);
+      const ok = addPlayer(modePlayer.nickname, modePlayer.tier, modePlayer.line, modePlayer.champion, true, currentMode === "classic" && !modePlayer.line);
+      if (!ok) return;
+      input.value = "";
+      dropdown.innerHTML = "";
+      closeSearchDropdownV2(dropdown);
+      selectedSavedPlayer = null;
+      alert(`${modePlayer.nickname} 선수가 등록되었습니다.`);
+    }
+
+    function calculateSavedDBScore(player) {
+      const saved = sanitizePlayer(player);
+      if (saved.line === "칼바람" || saved.line === "아레나") return calculateScore(saved.tier, saved.line);
+      if (getClassicLineNames().includes(saved.line)) return calculateScore(saved.tier, saved.line);
+      if (currentMode === "aram") return calculateScore(saved.tier, "칼바람");
+      if (currentMode === "arena") return calculateScore(saved.tier, "아레나");
+      return Number(saved.score) || 0;
+    }
+
+    function upsertPlayerDB(player) {
+      const targetNickname = normalizeSearchText(player.nickname);
+      const existingPlayer = playerDB.find(savedPlayer => normalizeSearchText(savedPlayer.nickname) === targetNickname);
+      const savedData = sanitizePlayer(player);
+      savedData.score = calculateSavedDBScore(savedData);
+      if (existingPlayer) {
+        existingPlayer.tier = savedData.tier;
+        existingPlayer.line = savedData.line;
+        if (savedData.champion) existingPlayer.champion = savedData.champion;
+        existingPlayer.score = savedData.score;
+      } else {
+        playerDB.push(savedData);
+      }
+    }
+
+    function syncPlayerEditToDB(player, changedFields = []) {
+      const edited = sanitizePlayer(player);
+      const targetNickname = normalizeSearchText(edited.nickname);
+      if (!targetNickname) return;
+
+      const existingPlayer = playerDB.find(savedPlayer => normalizeSearchText(savedPlayer.nickname) === targetNickname);
+      const mergedPlayer = sanitizePlayer(existingPlayer || edited);
+      mergedPlayer.nickname = edited.nickname;
+
+      if (changedFields.includes("tier")) mergedPlayer.tier = edited.tier;
+
+      // 협곡에서 라인을 수정할 때만 DB의 주 라인을 바꾼다.
+      // 칼바람/아레나 모드의 임시 라인값이 기존 협곡 라인을 덮어쓰지 않게 막는다.
+      if (changedFields.includes("line") && currentMode === "classic") {
+        mergedPlayer.line = edited.line;
+      }
+
+      if (changedFields.includes("champion") && edited.champion) {
+        mergedPlayer.champion = edited.champion;
+      }
+
+      // 기존 DB가 없던 선수라면 현재 등록 명단 정보를 기준으로 새로 저장한다.
+      if (!existingPlayer) {
+        mergedPlayer.tier = edited.tier;
+        mergedPlayer.line = edited.line;
+        mergedPlayer.champion = edited.champion;
+      }
+
+      mergedPlayer.score = calculateSavedDBScore(mergedPlayer);
+      upsertPlayerDB(mergedPlayer);
+      renderPlayerDBCount();
+      savePlayerToServer(mergedPlayer);
+    }
+
+    function renderPlayerDBCount() {
+      document.querySelectorAll("#dbCount").forEach(dbCount => { dbCount.textContent = playerDB.length; });
+    }
+
+    function renderPlayers() {
+      const playerList = document.getElementById("playerList");
+      const count = document.getElementById("count");
+      const tabCount = document.getElementById("tabCount");
+      playerList.innerHTML = "";
+      count.textContent = players.length;
+      tabCount.textContent = players.length;
+      updateUndoButtonState();
+
+      if (players.length === 0) {
+        playerList.innerHTML = `<div class="empty-message" style="grid-column:1/-1;">등록된 선수가 없습니다. 선수를 추가해 주세요.</div>`;
+        return;
+      }
+
+      players.forEach((player, index) => {
+        const card = document.createElement("div");
+        card.className = "player-card";
+        card.dataset.playerIndex = index;
+
+        const showChampion = (currentMode === "classic" || currentMode === "arena");
+        const hasChampion = showChampion && player.champion;
+        const imageHtml = hasChampion
+          ? `<img src="${getChampionImage(player.champion)}" onerror="this.style.display='none'" class="champion-img" alt="${escapeHtml(player.champion)}">`
+          : "";
+
+        const tierOptions = getTierNames().map(tierName =>
+          `<option value="${escapeHtml(tierName)}" ${player.tier === tierName ? "selected" : ""}>${escapeHtml(tierName)}</option>`
+        ).join("");
+
+        const lineOptions = currentMode === "classic"
+          ? getClassicLineNames().map(lineName =>
+              `<option value="${escapeHtml(lineName)}" ${player.line === lineName ? "selected" : ""}>${escapeHtml(lineName)}</option>`
+            ).join("")
+          : `<option value="${escapeHtml(player.line || (currentMode === "aram" ? "칼바람" : "아레나"))}" selected>${escapeHtml(player.line || (currentMode === "aram" ? "칼바람" : "아레나"))}</option>`;
+
+        const championOptions = championList.map(championName =>
+          `<option value="${escapeHtml(championName)}" ${player.champion === championName ? "selected" : ""}>${escapeHtml(championName)}</option>`
+        ).join("");
+
+        const championEdit = showChampion
+          ? `<select class="card-select champion-select" title="챔피언 수정" onchange="updatePlayerCardField(${index}, 'champion', this.value)">${championOptions}</select>`
+          : "";
+
+        card.innerHTML = `
+          <button class="card-trash-btn" onclick="removePlayer(${index})" title="삭제">🗑️</button>
+          ${imageHtml}
+          <div class="nickname" title="${escapeHtml(player.nickname)}">${escapeHtml(player.nickname)}</div>
+          <div class="card-edit-row">
+            <select class="card-select tier" title="티어 수정" onchange="updatePlayerCardField(${index}, 'tier', this.value)">${tierOptions}</select>
+            <select class="card-select line" title="라인 수정" ${currentMode === "classic" ? "" : "disabled"} onchange="updatePlayerCardField(${index}, 'line', this.value)">${lineOptions}</select>
+            ${championEdit}
+          </div>
+          <div class="score">밸런스 점수: <strong>${player.score}점</strong></div>`;
+        playerList.appendChild(card);
+      });
+    }
+
+    async function updatePlayerCardField(index, field, value) {
+      const player = players[index];
+      if (!player) return;
+
+      const nextValue = String(value || "").trim();
+
+      if (field === "tier") {
+        if (!getTierNames().includes(nextValue)) return;
+        player.tier = nextValue;
+      }
+
+      if (field === "line") {
+        if (currentMode === "classic" && !getClassicLineNames().includes(nextValue)) return;
+        player.line = nextValue;
+      }
+
+      if (field === "champion") {
+        const normalizedChampion = normalizeChampion(nextValue);
+        if (!championList.includes(normalizedChampion)) {
+          alert("챔피언 이름이 올바르지 않습니다.");
+          renderPlayers();
+          return;
+        }
+        player.champion = normalizedChampion;
+      }
+
+      if (currentMode === "aram") player.line = "칼바람";
+      if (currentMode === "arena") player.line = "아레나";
+
+      player.score = getModeScore(player);
+
+      syncPlayerEditToDB(player, [field]);
+      resetTeams();
+      renderPlayers();
+      renderPlayerDBCount();
+      saveData();
+
+      const updatedCard = document.querySelector(`.player-card[data-player-index="${index}"]`);
+      if (updatedCard) {
+        updatedCard.classList.remove("edit-pulse");
+        void updatedCard.offsetWidth;
+        updatedCard.classList.add("edit-pulse");
+      }
+
+    }
+
+
+    function removePlayer(index) {
+      if (!players[index]) return;
+      const removedPlayer = sanitizePlayer(players[index]);
+      players.splice(index, 1);
+      pushDeletedPlayerUndoEntry({ type: "delete", index, players: [removedPlayer] });
+      resetTeams();
+      renderPlayers();
+      renderPlayerDBCount();
+      saveData();
+    }
+    function clearAll(shouldConfirm = true) {
+      if (shouldConfirm && players.length > 0 && !confirm("현재 등록 명단을 초기화할까요?")) return;
+      if (players.length > 0) {
+        pushDeletedPlayerUndoEntry({ type: "clear", index: 0, players: players.map(player => sanitizePlayer(player)) });
+      }
+      players.length = 0; blueTeam = []; redTeam = []; arenaTeams = [];
+      document.getElementById("teamResult").innerHTML = `<div class="empty-message">등록된 선수가 있으면 내전표 탭에서 바로 팀을 확인할 수 있습니다.</div>`;
+      renderPlayers(); renderPlayerDBCount(); saveData();
+    }
+    function resetTeams() { blueTeam = []; redTeam = []; arenaTeams = []; document.getElementById("teamResult").innerHTML = `<div class="empty-message">등록된 선수가 있으면 내전표 탭에서 바로 팀을 확인할 수 있습니다.</div>`; }
+    function averageScore(team) { return team.length ? team.reduce((sum, player) => sum + player.score, 0) / team.length : 0; }
+    function sumScore(team) { return team.reduce((sum, player) => sum + player.score, 0); }
+
+
+    function getModeScore(player) {
+      if (currentMode === "classic") {
+        return calculateScore(player.tier, player.line);
+      }
+      if (currentMode === "aram") {
+        return calculateScore(player.tier, "칼바람");
+      }
+      return calculateScore(player.tier, "아레나");
+    }
+
+    function refreshModeScores() {
+      players.forEach(player => {
+        player.score = getModeScore(player);
+      });
+    }
+
+    
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function shuffleArrayCopy(array) {
+      const copied = [...array];
+      for (let i = copied.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copied[i], copied[j]] = [copied[j], copied[i]];
+      }
+      return copied;
+    }
+
+    function setShuffleLock(isLocked) {
+      document.querySelectorAll("button").forEach(button => {
+        if (button.closest(".mode-selection")) return;
+        if (button.closest(".tab-menu")) return;
+        button.disabled = isLocked;
+      });
+    }
+
+    function makeRandomTwoTeamsPreview() {
+      const shuffled = shuffleArrayCopy(players);
+      const blueSize = Math.ceil(shuffled.length / 2);
+      blueTeam = shuffled.slice(0, blueSize);
+      redTeam = shuffled.slice(blueSize);
+      arenaTeams = [];
+      renderTeams();
+    }
+
+    function makeRandomArenaTeamsPreview() {
+      const shuffled = shuffleArrayCopy(players);
+      arenaTeams = [];
+      for (let i = 0; i < shuffled.length; i += 3) {
+        arenaTeams.push(shuffled.slice(i, i + 3));
+      }
+      blueTeam = [];
+      redTeam = [];
+      renderArenaTeams(arenaTeams);
+    }
+
+    function getShuffleRows() {
+      return Array.from(document.querySelectorAll("#teamResult .team-player, #teamResult .arena-mem"));
+    }
+
+    function buildShuffleDeck() {
+      const deck = document.createElement("div");
+      deck.className = "shuffle-deck";
+      for (let i = 0; i < 5; i++) {
+        const card = document.createElement("div");
+        card.className = "shuffle-deck-card";
+        deck.appendChild(card);
+      }
+      return deck;
+    }
+
+    async function playCinematicShuffle(finalizeCallback) {
+      const result = document.getElementById("teamResult");
+      const matchContainer = result?.querySelector(".match-container");
+      const rows = getShuffleRows();
+
+      if (!matchContainer || rows.length === 0) {
+        finalizeCallback();
+        return;
+      }
+
+      const layer = document.createElement("div");
+      layer.className = "shuffle-cinematic-layer";
+
+      const deck = buildShuffleDeck();
+      layer.appendChild(deck);
+      document.body.appendChild(layer);
+
+      matchContainer.classList.add("shuffle-dim");
+
+      await sleep(120);
+      deck.classList.add("cutting");
+      await sleep(360);
+
+      finalizeCallback();
+      await sleep(45);
+
+      const spreadRows = getShuffleRows();
+      spreadRows.forEach((row, index) => {
+        row.classList.remove("shuffle-spread-in");
+        row.style.animationDelay = `${Math.min(index * 0.018, 0.14)}s`;
+        void row.offsetWidth;
+        row.classList.add("shuffle-spread-in");
+      });
+
+      matchContainer.classList.remove("shuffle-dim");
+      await sleep(260);
+      layer.remove();
+
+      setTimeout(() => {
+        spreadRows.forEach(row => {
+          row.classList.remove("shuffle-spread-in");
+          row.style.animationDelay = "";
+        });
+      }, 420);
+    }
+
+    async function shuffleMatchTeams() {
+      if (players.length === 0) {
+        alert("셔플할 선수가 없습니다.");
+        return;
+      }
+
+      if ((currentMode === "arena" && arenaTeams.length === 0) || (currentMode !== "arena" && blueTeam.length === 0 && redTeam.length === 0)) {
+        if (currentMode === "arena") makeArenaTeams();
+        else makeTeams();
+      }
+
+      setShuffleLock(true);
+      try {
+        await playCinematicShuffle(() => {
+          refreshModeScores();
+          if (currentMode === "arena") makeOptimalArenaTeams();
+          else makeOptimalTwoTeams();
+          saveData();
+        });
+      } finally {
+        setShuffleLock(false);
+      }
+    }
+
+function makeTeams() {
+      blueTeam = [];
+      redTeam = [];
+      arenaTeams = [];
+      refreshModeScores();
+      players.forEach((player, index) => {
+        if (index % 2 === 0) blueTeam.push(player);
+        else redTeam.push(player);
+      });
+      renderTeams();
+      saveData();
+    }
+
+    function makeOptimalTeams() {
+      if (currentMode === "arena") {
+        makeOptimalArenaTeams();
+        return;
+      }
+      makeOptimalTwoTeams();
+    }
+
+    function makeOptimalTwoTeams() {
+      blueTeam = [];
+      redTeam = [];
+      arenaTeams = [];
+      refreshModeScores();
+
+      if (players.length === 0) {
+        renderTeams();
+        saveData();
+        return;
+      }
+
+      const targetBlueSize = Math.ceil(players.length / 2);
+
+      if (players.length > 20) {
+        const sorted = [...players].sort((a, b) => getModeScore(b) - getModeScore(a));
+        sorted.forEach(player => {
+          if (blueTeam.length >= targetBlueSize) redTeam.push(player);
+          else if (redTeam.length >= players.length - targetBlueSize) blueTeam.push(player);
+          else if (sumScore(blueTeam) <= sumScore(redTeam)) blueTeam.push(player);
+          else redTeam.push(player);
+        });
+        renderTeams();
+        saveData();
+        return;
+      }
+
+      const combinations = getCombinations(players, targetBlueSize);
+      let bestBlue = [];
+      let bestRed = [];
+      let bestScore = Infinity;
+
+      combinations.forEach(candidateBlue => {
+        const candidateSet = new Set(candidateBlue);
+        const candidateRed = players.filter(player => !candidateSet.has(player));
+        const avgDiff = Math.abs(averageScore(candidateBlue) - averageScore(candidateRed));
+        const sumDiff = Math.abs(sumScore(candidateBlue) - sumScore(candidateRed)) / 1000;
+        const score = avgDiff + sumDiff;
+        if (score < bestScore) {
+          bestScore = score;
+          bestBlue = candidateBlue;
+          bestRed = candidateRed;
+        }
+      });
+
+      blueTeam = [...bestBlue];
+      redTeam = [...bestRed];
+      renderTeams();
+      saveData();
+    }
+
+    function getCombinations(array, size) {
+      const result = [];
+      function pick(start, combo) {
+        if (combo.length === size) { result.push([...combo]); return; }
+        for (let i = start; i < array.length; i++) { combo.push(array[i]); pick(i + 1, combo); combo.pop(); }
+      }
+      pick(0, []); return result;
+    }
+
+    function renderTeams() {
+      const result = document.getElementById("teamResult");
+      const blueAvg = averageScore(blueTeam), redAvg = averageScore(redTeam), diff = Math.abs(blueAvg - redAvg);
+      result.innerHTML = `
+        <div class="match-container">
+          <div class="action-row" style="margin-bottom:18px;">
+            <button class="shuffle-button" onclick="shuffleMatchTeams()">팀 셔플</button>
+          </div>
+          <div class="team-area">
+            ${renderTeamBox("blue", "BLUE TEAM", blueTeam)}
+            ${renderTeamBox("red", "RED TEAM", redTeam)}
+          </div>
+          <div class="difference-box">⚖️ 팀 평균 점수 차이: ${diff.toFixed(1)} 점</div>
+          <div class="drag-guide">팀 셔플은 ${currentMode === "classic" ? "티어와 라인 점수" : "티어 점수"}를 기준으로 최대한 균형 있게 나눕니다. 완성된 내전표에서 선수를 드래그앤드롭으로 이동할 수 있습니다.</div>
+        </div>`;
+      setupDrag();
+    }
+    function renderTeamBox(teamKey, title, team) {
+      const showChampion = currentMode === "classic" || currentMode === "arena";
+      const isAram = currentMode === "aram";
+      const header = isAram
+        ? `<div class="team-header no-champion"><span>닉네임</span><span>티어</span><span>점수</span></div>`
+        : `<div class="team-header"><span>픽</span><span>닉네임</span><span>티어</span><span>라인</span><span>챔피언</span><span>점수</span></div>`;
+      const rows = team.map((player, index) => {
+        if (isAram) {
+          return `<div class="team-player no-champion" draggable="true" data-team="${teamKey}" data-index="${index}"><span class="name" title="${escapeHtml(player.nickname)}">${escapeHtml(player.nickname)}</span><span>${renderTierEditSelect(teamKey, index, player.tier)}</span><span class="score-value">${player.score}</span></div>`;
+        }
+        const championImage = showChampion
+          ? `<div class="team-pick-slot"><img src="${getChampionImage(player.champion)}" onerror="this.style.display='none'; this.parentElement.textContent='?';" class="team-champion-img" alt="${escapeHtml(player.champion || '')}"></div>`
+          : "";
+        const championCell = showChampion ? `<span class="champ-name" title="${escapeHtml(player.champion || '-')}">${escapeHtml(player.champion || "-")}</span>` : "";
+        const lineCell = currentMode === "classic" ? renderLineEditSelect(teamKey, index, player.line) : escapeHtml(player.line || "-");
+        return `<div class="team-player" draggable="true" data-team="${teamKey}" data-index="${index}">${championImage}<span class="name" title="${escapeHtml(player.nickname)}">${escapeHtml(player.nickname)}</span><span>${renderTierEditSelect(teamKey, index, player.tier)}</span><span>${lineCell}</span>${championCell}<span class="score-value">${player.score}</span></div>`;
+      }).join("");
+      return `<div class="team ${teamKey}"><h3>${title}</h3><div class="team-summary">평균: ${averageScore(team).toFixed(1)}점 / 총합: ${sumScore(team)}점</div><div class="team-table"><div class="team-table-inner">${header}<div class="team-zone" data-zone="${teamKey}">${rows}</div></div></div></div>`;
+    }
+
+    function updateTeamPlayerField(teamKey, index, field, value) {
+      const team = getTeam(teamKey);
+      const player = team[index];
+      if (!player) return;
+      player[field] = value;
+      player.score = calculateScore(player.tier, player.line);
+
+      syncPlayerEditToDB(player, [field]);
+      renderPlayers();
+      renderTeams();
+      saveData();
+    }
+    function getTeam(teamKey) { return teamKey === "blue" ? blueTeam : redTeam; }
+    function clearDragMark() { document.querySelectorAll(".team-player").forEach(item => item.classList.remove("before", "after")); document.querySelectorAll(".team-zone").forEach(zone => zone.classList.remove("over")); }
+    function setupDrag() {
+      const rows = document.querySelectorAll(".team-player"), zones = document.querySelectorAll(".team-zone");
+      rows.forEach(row => {
+        row.addEventListener("dragstart", () => { dragTeam = row.dataset.team; dragIndex = Number(row.dataset.index); row.classList.add("dragging"); });
+        row.addEventListener("dragover", event => { event.preventDefault(); clearDragMark(); const rect = row.getBoundingClientRect(); const isTop = event.clientY < rect.top + rect.height / 2; targetTeam = row.dataset.team; targetIndex = Number(row.dataset.index) + (isTop ? 0 : 1); row.classList.add(isTop ? "before" : "after"); const zone = row.closest(".team-zone"); if (zone) zone.classList.add("over"); });
+        row.addEventListener("drop", event => { event.preventDefault(); event.stopPropagation(); movePlayer(); });
+        row.addEventListener("dragend", () => { dragTeam = ""; dragIndex = null; targetTeam = ""; targetIndex = null; clearDragMark(); document.querySelectorAll(".team-player").forEach(item => item.classList.remove("dragging")); });
+      });
+      zones.forEach(zone => {
+        zone.addEventListener("dragover", event => { event.preventDefault(); if (event.target.closest(".team-player")) return; clearDragMark(); targetTeam = zone.dataset.zone; targetIndex = getTeam(targetTeam).length; zone.classList.add("over"); });
+        zone.addEventListener("drop", event => { event.preventDefault(); movePlayer(); });
+      });
+    }
+    function movePlayer() {
+      if (!dragTeam || dragIndex === null || !targetTeam || targetIndex === null) return;
+      const fromTeam = getTeam(dragTeam), toTeam = getTeam(targetTeam), player = fromTeam.splice(dragIndex, 1)[0];
+      if (!player) return;
+      if (dragTeam === targetTeam && dragIndex < targetIndex) targetIndex--;
+      toTeam.splice(targetIndex, 0, player);
+      dragTeam = ""; dragIndex = null; targetTeam = ""; targetIndex = null; renderTeams(); saveData();
+    }
+
+    function makeArenaTeams() {
+      arenaTeams = [];
+      refreshModeScores();
+      for (let i = 0; i < players.length; i += 3) {
+        arenaTeams.push(players.slice(i, i + 3));
+      }
+      renderArenaTeams(arenaTeams);
+      saveData();
+    }
+
+    function makeOptimalArenaTeams() {
+      arenaTeams = [];
+      refreshModeScores();
+
+      if (players.length === 0) {
+        renderArenaTeams(arenaTeams);
+        saveData();
+        return;
+      }
+
+      const teamCount = Math.ceil(players.length / 3);
+      const baseSize = Math.floor(players.length / teamCount);
+      const remainder = players.length % teamCount;
+      const capacities = Array.from({ length: teamCount }, (_, index) => baseSize + (index < remainder ? 1 : 0));
+      const sorted = [...players].sort((a, b) => getModeScore(b) - getModeScore(a));
+      const teams = Array.from({ length: teamCount }, () => []);
+
+      sorted.forEach(player => {
+        let bestIndex = -1;
+        let bestSum = Infinity;
+        for (let i = 0; i < teams.length; i++) {
+          if (teams[i].length >= capacities[i]) continue;
+          const currentSum = sumScore(teams[i]);
+          if (currentSum < bestSum) {
+            bestSum = currentSum;
+            bestIndex = i;
+          }
+        }
+        if (bestIndex === -1) bestIndex = teams.findIndex(team => team.length < 3);
+        if (bestIndex === -1) bestIndex = teams.length - 1;
+        teams[bestIndex].push(player);
+      });
+
+      arenaTeams = teams;
+      renderArenaTeams(arenaTeams);
+      saveData();
+    }
+
+    function renderArenaTeams(teams) {
+      const result = document.getElementById("teamResult");
+      const safeTeams = Array.isArray(teams) ? teams : [];
+      if (safeTeams.length === 0) {
+        result.innerHTML = `<div class="match-container"><div class="empty-message">아직 등록된 아레나 참가자가 없습니다. 선수를 추가하면 이곳에 팀이 표시됩니다.</div></div>`;
+        return;
+      }
+      const averages = safeTeams.map(team => averageScore(team));
+      const diff = averages.length ? Math.max(...averages) - Math.min(...averages) : 0;
+      result.innerHTML = `
+        <div class="match-container">
+          <div class="action-row" style="margin-bottom:18px;">
+            <button class="shuffle-button" onclick="shuffleMatchTeams()">팀 셔플</button>
+          </div>
+          <div class="arena-grid-6">
+            ${safeTeams.map((team, teamIndex) => `
+              <div class="arena-team-box">
+                <h3>ARENA TEAM ${teamIndex + 1}</h3>
+                ${team.map((player, playerIndex) => `
+                  <div class="arena-mem arena-profile">
+                    <div class="arena-pick-slot">${player.champion ? `<img src="${getChampionImage(player.champion)}" onerror="this.style.display='none'; this.parentElement.textContent='?';" class="arena-champion-img" alt="${escapeHtml(player.champion)}">` : `?`}</div>
+                    <div class="arena-profile-info">
+                      <span class="a-name">${escapeHtml(player.nickname)}</span>
+                      <span class="a-tier">${player.champion ? escapeHtml(player.champion) : "챔피언 없음"}</span>
+                      ${renderTierEditSelect(teamIndex, playerIndex, player.tier, "updateArenaPlayerField")}
+                    </div>
+                    <span class="a-score">${player.score}점</span>
+                  </div>
+                `).join("")}
+                <div class="arena-team-score">평균 ${averageScore(team).toFixed(1)}점 / ${team.length}명</div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="difference-box">⚖️ 최고/최저 팀 평균 차이: ${diff.toFixed(1)} 점</div>
+          <div class="drag-guide">팀 셔플은 티어 점수를 기준으로 최대한 균형 있게 나눕니다. 3명 미만 팀도 표시되며, 이후 직접 조정할 수 있습니다.</div>
+        </div>`;
+    }
+
+    function updateArenaPlayerField(teamIndex, playerIndex, field, value) {
+      const team = arenaTeams[teamIndex];
+      const player = team && team[playerIndex];
+      if (!player) return;
+      player[field] = value;
+      player.score = calculateScore(player.tier, "아레나");
+      const original = players.find(item => normalizeSearchText(item.nickname) === normalizeSearchText(player.nickname));
+      if (original) {
+        original.tier = player.tier;
+        original.score = player.score;
+      }
+
+      syncPlayerEditToDB(player, [field]);
+      renderPlayers();
+      renderArenaTeams(arenaTeams);
+      saveData();
+    }
+
+
+
+    function splitCommaText(text) { return text.split(",").map(item => item.trim()).filter(Boolean); }
+    function savePreBanSettings() {
+      preBanData.blueChamp = document.getElementById("input-blue-champ-ban").value.trim();
+      preBanData.blueSpell = document.getElementById("input-blue-spell-ban").value.trim();
+      preBanData.redChamp = document.getElementById("input-red-champ-ban").value.trim();
+      preBanData.redSpell = document.getElementById("input-red-spell-ban").value.trim();
+      renderPreBanDisplay(); saveData();
+    }
+    function setPreBanInputs() {
+      const blueChamp = document.getElementById("input-blue-champ-ban"), blueSpell = document.getElementById("input-blue-spell-ban"), redChamp = document.getElementById("input-red-champ-ban"), redSpell = document.getElementById("input-red-spell-ban");
+      if (blueChamp) blueChamp.value = preBanData.blueChamp;
+      if (blueSpell) blueSpell.value = preBanData.blueSpell;
+      if (redChamp) redChamp.value = preBanData.redChamp;
+      if (redSpell) redSpell.value = preBanData.redSpell;
+    }
+    function renderBanBadges(text, type) {
+      const items = splitCommaText(text);
+      if (items.length === 0) return `<span class="no-result">없음</span>`;
+      return items.map(item => `<span class="ban-badge ${type}">${item}</span>`).join("");
+    }
+    function renderPreBanDisplay() {
+      const display = document.getElementById("preBanDisplay");
+      if (!display) return;
+      display.innerHTML = `<div class="ban-group"><b>BLUE 챔피언</b>${renderBanBadges(preBanData.blueChamp, "champ")}</div><div class="ban-group"><b>BLUE 스펠</b>${renderBanBadges(preBanData.blueSpell, "spell")}</div><div class="ban-group"><b>RED 챔피언</b>${renderBanBadges(preBanData.redChamp, "champ")}</div><div class="ban-group"><b>RED 스펠</b>${renderBanBadges(preBanData.redSpell, "spell")}</div>`;
+    }
+
+    function randomPick(list) { return list[Math.floor(Math.random() * list.length)]; }
+    function rouletteDraw(list, icon = "🎰") {
+      const output = document.getElementById("funText");
+      if (!output || !Array.isArray(list) || list.length === 0) return;
+
+      output.classList.add("roulette-running");
+      let count = 0;
+      const maxCount = 22;
+      const timer = setInterval(() => {
+        output.innerHTML = `<span class="slot-item">${icon} ${escapeHtml(randomPick(list))}</span>`;
+        count++;
+        if (count >= maxCount) {
+          clearInterval(timer);
+          const result = randomPick(list);
+          output.innerHTML = `<span class="slot-item">${icon} ${escapeHtml(result)}</span>`;
+          output.classList.remove("roulette-running");
+        }
+      }, 70);
+    }
+    function randomPunishment() { rouletteDraw(punishments, "☠️"); }
+    function randomPersonalMission() { rouletteDraw(personalMissions, "🧍"); }
+    function randomTeamMission() { rouletteDraw(teamMissions, "👥"); }
+    function randomGlobalMission() { rouletteDraw(globalMissions, "🌐"); }
+
+
+
+    function getDraftChampState(champ) {
+      for (const team of ['blue', 'red']) {
+        if (draftSelections[team].bans.includes(champ)) {
+          return { used: true, type: 'ban', team };
+        }
+        if (draftSelections[team].picks.includes(champ)) {
+          return { used: true, type: 'pick', team };
+        }
+      }
+      return { used: false, type: '', team: '' };
+    }
+
+    function getAvailableDraftChampions() {
+      return championList.filter(champ => !isChampUsedInDraft(champ));
+    }
+
+    function pickRandomAvailableChampion() {
+      const available = getAvailableDraftChampions();
+      if (available.length === 0) return "";
+      return available[Math.floor(Math.random() * available.length)];
+    }
+
+    function setNoBanButtonState() {
+      const btn = document.getElementById("draftNoBanButton");
+      if (!btn) return;
+
+      if (currentDraftStep >= draftSequence.length) {
+        btn.disabled = true;
+        btn.classList.add("disabled");
+        btn.textContent = "노밴";
+        btn.title = "밴픽이 완료되었습니다.";
+        return;
+      }
+
+      const step = draftSequence[currentDraftStep];
+      const canNoBan = step.type === "ban";
+      btn.disabled = !canNoBan;
+      btn.classList.toggle("disabled", !canNoBan);
+      btn.textContent = "노밴";
+      btn.title = canNoBan ? "밴하지 않고 다음 차례로 넘어갑니다." : "픽 차례에는 시간이 끝나면 자동으로 랜덤 픽됩니다.";
+    }
+
+    function handleDraftTimeout() {
+      if (currentDraftStep >= draftSequence.length) return;
+
+      const step = draftSequence[currentDraftStep];
+      if (step.type === "ban") {
+        noBanDraftTurn(true);
+        return;
+      }
+
+      const randomChamp = pickRandomAvailableChampion();
+      if (!randomChamp) return;
+      selectChampionForCurrentDraft(randomChamp, true);
+    }
+
+    function initDraftCenterGrid() {
+      const grid = document.getElementById("draftChampGrid");
+      grid.innerHTML = "";
+
+      championList.sort().forEach(champ => {
+        const tile = document.createElement("div");
+        tile.className = "champ-tile-new";
+        tile.setAttribute("data-name", champ);
+        tile.id = `draft-tile-${champ}`;
+
+        const state = getDraftChampState(champ);
+        if (state.used || currentDraftStep >= draftSequence.length) {
+          tile.classList.add("disabled");
+        }
+        if (state.used) {
+          tile.classList.add(`draft-${state.type === "ban" ? "banned" : "picked"}-${state.team}`);
+          tile.setAttribute("data-draft-label", `${state.team === "blue" ? "BLUE" : "RED"} ${state.type === "ban" ? "BAN" : "PICK"}`);
+        }
+
+        const imgUrl = getChampionImage(champ);
+        tile.innerHTML = `
+          <img src="${imgUrl}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'54\' height=\'54\'><rect width=\'54\' height=\'54\' fill=\'%23070b14\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%237282a8\' font-size=\'10\'>${champ}</text></svg>';" />
+          <div class="tile-name">${champ}</div>
+        `;
+
+        if (currentDraftStep < draftSequence.length && !state.used) {
+          tile.onclick = () => selectChampionForCurrentDraft(champ);
+        }
+        grid.appendChild(tile);
+      });
+
+      refreshDraftUIHighlights();
+    }
+
+    function draftChampionMatches(champ, keyword) {
+      if (typeof searchMatchV2 === "function") {
+        return searchMatchV2(champ, keyword, getChampionAliasesV2(champ));
+      }
+      return includesSmartSearch(champ, keyword, championEnglishAliases[champ] || []);
+    }
+
+    function filterDraftChampions() {
+      const input = document.getElementById("draftChampSearch");
+      const grid = document.getElementById("draftChampGrid");
+      if (!grid) return;
+
+      const keyword = input ? input.value : "";
+      const tiles = Array.from(grid.querySelectorAll(".champ-tile-new"));
+      const previousRects = new Map();
+
+      tiles.forEach(tile => {
+        if (!tile.classList.contains("draft-filter-hidden")) {
+          previousRects.set(tile, tile.getBoundingClientRect());
+        }
+      });
+
+      tiles.forEach(tile => {
+        const champ = tile.getAttribute("data-name") || "";
+        const matched = !keyword.trim() || draftChampionMatches(champ, keyword);
+        tile.classList.toggle("draft-filter-hidden", !matched);
+        tile.classList.remove("draft-filter-enter");
+      });
+
+      const visibleTiles = tiles.filter(tile => !tile.classList.contains("draft-filter-hidden"));
+
+      visibleTiles.forEach(tile => {
+        const previous = previousRects.get(tile);
+        const current = tile.getBoundingClientRect();
+
+        if (previous) {
+          const dx = previous.left - current.left;
+          const dy = previous.top - current.top;
+          if (dx || dy) {
+            tile.animate(
+              [
+                { transform: `translate(${dx}px, ${dy}px)`, opacity: 0.84 },
+                { transform: "translate(0, 0)", opacity: 1 }
+              ],
+              { duration: 180, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" }
+            );
+          }
+        } else {
+          tile.classList.add("draft-filter-enter");
+          setTimeout(() => tile.classList.remove("draft-filter-enter"), 200);
+        }
+      });
+    }
+
+    function isChampUsedInDraft(champ) {
+      if (!champ) return false;
+      let used = false;
+      ['blue', 'red'].forEach(t => {
+        if (draftSelections[t].bans.includes(champ)) used = true;
+        if (draftSelections[t].picks.includes(champ)) used = true;
+      });
+      return used;
+    }
+
+
+    function ensureDraftTimerUI() {
+      const top = document.querySelector(".draft-top");
+      if (!top) return null;
+
+      let shell = document.getElementById("draftTimerShell");
+      if (!shell) {
+        shell = document.createElement("div");
+        shell.id = "draftTimerShell";
+        shell.className = "draft-timer-shell";
+        shell.innerHTML = `
+          <div class="draft-timer-track"><div class="draft-timer-fill"></div></div>
+          <div id="draftTimerNumber" class="draft-timer-number">30</div>
+        `;
+        top.appendChild(shell);
+      }
+      return shell;
+    }
+
+    let draftTimerInterval = null;
+    let draftTimerTimeout = null;
+    const DRAFT_TIME_LIMIT = 30;
+
+    function stopDraftTimer(finished = false) {
+      if (draftTimerInterval) clearInterval(draftTimerInterval);
+      if (draftTimerTimeout) clearTimeout(draftTimerTimeout);
+      draftTimerInterval = null;
+      draftTimerTimeout = null;
+
+      const shell = ensureDraftTimerUI();
+      const number = document.getElementById("draftTimerNumber");
+      if (!shell || !number) return;
+
+      shell.classList.remove("running", "finished");
+      if (finished) {
+        shell.classList.add("finished");
+        number.textContent = "END";
+      } else {
+        number.textContent = DRAFT_TIME_LIMIT;
+      }
+    }
+
+    function restartDraftTimer() {
+      stopDraftTimer(false);
+
+      if (currentDraftStep >= draftSequence.length) {
+        stopDraftTimer(true);
+        return;
+      }
+
+      const shell = ensureDraftTimerUI();
+      const number = document.getElementById("draftTimerNumber");
+      if (!shell || !number) return;
+
+      let left = DRAFT_TIME_LIMIT;
+      number.textContent = left;
+      shell.classList.remove("running", "finished");
+      void shell.offsetWidth;
+      shell.classList.add("running");
+
+      draftTimerInterval = setInterval(() => {
+        left -= 1;
+        number.textContent = Math.max(left, 0);
+        if (left <= 0 && draftTimerInterval) {
+          clearInterval(draftTimerInterval);
+          draftTimerInterval = null;
+        }
+      }, 1000);
+
+      draftTimerTimeout = setTimeout(() => {
+        if (currentDraftStep < draftSequence.length) {
+          handleDraftTimeout();
+        }
+      }, DRAFT_TIME_LIMIT * 1000);
+    }
+
+    function setDraftTurnTheme(team) {
+      const container = document.querySelector(".draft-container");
+      if (!container) return;
+      container.classList.remove("draft-turn-blue", "draft-turn-red", "draft-complete");
+
+      if (currentDraftStep >= draftSequence.length) {
+        container.classList.add("draft-complete");
+        return;
+      }
+
+      if (team === "blue") container.classList.add("draft-turn-blue");
+      if (team === "red") container.classList.add("draft-turn-red");
+    }
+
+    function showDraftCinematic(type, team, champ) {
+      const container = document.querySelector(".draft-container");
+      if (!container) return;
+
+      const oldBanner = container.querySelector(".draft-cinematic-banner");
+      if (oldBanner) oldBanner.remove();
+
+      const banner = document.createElement("div");
+      banner.className = `draft-cinematic-banner ${team}`;
+
+      const teamText = team === "blue" ? "BLUE TEAM" : "RED TEAM";
+      const typeText = type === "ban" ? "BAN LOCKED" : "PICK LOCKED";
+
+      banner.innerHTML = `
+        <span class="draft-banner-type">${teamText} · ${typeText}</span>
+        <span class="draft-banner-champ">${escapeHtml(champ)}</span>
+      `;
+
+      container.appendChild(banner);
+
+      setTimeout(() => {
+        banner.remove();
+      }, 1000);
+    }
+
+    function playDraftAnimation(type, team, idx, champ) {
+      const container = document.querySelector(".draft-container");
+      const slotId = `${team}-${type}-${idx}`;
+      const slot = document.getElementById(slotId);
+      const tile = document.getElementById(`draft-tile-${champ}`);
+
+      if (container) {
+        const screenClass = team === "blue" ? "draft-screen-blue" : "draft-screen-red";
+        container.classList.add(screenClass);
+
+        setTimeout(() => {
+          container.classList.remove(screenClass);
+        }, 750);
+      }
+
+      if (slot) {
+        const impactClass = team === "blue" ? "draft-impact-blue" : "draft-impact-red";
+        const burstClass = team === "blue" ? "draft-burst-blue" : "draft-burst-red";
+
+        slot.classList.add(impactClass);
+
+        const burst = document.createElement("div");
+        burst.className = burstClass;
+        slot.appendChild(burst);
+
+        setTimeout(() => {
+          slot.classList.remove(impactClass);
+          burst.remove();
+        }, 850);
+      }
+
+      if (tile) {
+        const tileClass = team === "blue" ? "draft-tile-blue-used" : "draft-tile-red-used";
+        tile.classList.add(tileClass);
+
+        setTimeout(() => {
+          tile.classList.remove(tileClass);
+        }, 780);
+      }
+
+      showDraftCinematic(type, team, champ);
+    }
+
+    function selectChampionForCurrentDraft(champ, isAuto = false) {
+      if (currentDraftStep >= draftSequence.length) {
+        return;
+      }
+
+      if (isChampUsedInDraft(champ)) return;
+
+      const currentStepInfo = draftSequence[currentDraftStep];
+      const team = currentStepInfo.team;
+      const type = currentStepInfo.type;
+      const idx = currentStepInfo.index;
+
+      if (type === "ban") {
+        draftSelections[team].bans[idx] = champ;
+      } else {
+        draftSelections[team].picks[idx] = champ;
+      }
+
+      currentDraftStep++;
+      document.getElementById("draftChampSearch").value = "";
+      saveData();
+
+      initDraftCenterGrid();
+
+      requestAnimationFrame(() => {
+        playDraftAnimation(type, team, idx, champ);
+      });
+    }
+
+    function noBanDraftTurn(isAuto = false) {
+      if (currentDraftStep >= draftSequence.length) return;
+
+      const currentStepInfo = draftSequence[currentDraftStep];
+      const team = currentStepInfo.team;
+      const type = currentStepInfo.type;
+      const idx = currentStepInfo.index;
+
+      if (type !== "ban") return;
+
+      draftSelections[team].bans[idx] = "❌ 밴 없음";
+      currentDraftStep++;
+      saveData();
+      initDraftCenterGrid();
+    }
+
+    function skipDraftTurn(isAuto = false) {
+      noBanDraftTurn(isAuto);
+    }
+
+    // 뒤로가기 / 지정 취소 기능 구현 함수
+    function undoDraftTurn() {
+      if (currentDraftStep === 0) {
+        alert("되돌릴 이전 밴픽 기록이 없습니다.");
+        return;
+      }
+      
+      currentDraftStep--; // 스텝 한 칸 후퇴
+      const prevStepInfo = draftSequence[currentDraftStep];
+      const team = prevStepInfo.team;
+      const type = prevStepInfo.type;
+      const idx = prevStepInfo.index;
+
+      // 해당 슬롯 데이터 비우기
+      if (type === 'ban') {
+        draftSelections[team].bans[idx] = null;
+      } else {
+        draftSelections[team].picks[idx] = null;
+      }
+
+      document.getElementById("draftChampSearch").value = "";
+      saveData();
+      initDraftCenterGrid(); // 그리드 초기화 및 하이라이트 리프레시
+    }
+
+    function setDraftSaveButtonState() {
+      const btn = document.getElementById("draftSaveImageButton");
+      if (!btn) return;
+      const done = currentDraftStep >= draftSequence.length;
+      btn.disabled = !done;
+      btn.classList.toggle("disabled", !done);
+      btn.title = done ? "완성된 밴픽 화면을 PNG 이미지로 저장합니다." : "밴픽이 완료되면 이미지 저장이 가능합니다.";
+    }
+
+    function loadHtml2CanvasLibrary() {
+      if (window.html2canvas) return Promise.resolve(window.html2canvas);
+
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[data-html2canvas="true"]');
+        if (existing) {
+          existing.addEventListener("load", () => resolve(window.html2canvas));
+          existing.addEventListener("error", reject);
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
+        script.async = true;
+        script.dataset.html2canvas = "true";
+        script.onload = () => resolve(window.html2canvas);
+        script.onerror = () => reject(new Error("html2canvas 로드 실패"));
+        document.head.appendChild(script);
+      });
+    }
+
+    function drawDraftRoundRect(ctx, x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + w - radius, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+      ctx.lineTo(x + w, y + h - radius);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+      ctx.lineTo(x + radius, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function drawDraftText(ctx, text, x, y, size, color = "#ffffff", align = "left", weight = 800) {
+      ctx.save();
+      ctx.font = `${weight} ${size}px Arial, Malgun Gothic, sans-serif`;
+      ctx.fillStyle = color;
+      ctx.textAlign = align;
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(text || ""), x, y);
+      ctx.restore();
+    }
+
+    function drawDraftWrappedText(ctx, text, x, y, maxWidth, lineHeight, size, color = "#ffffff", weight = 800) {
+      const value = String(text || "-");
+      ctx.save();
+      ctx.font = `${weight} ${size}px Arial, Malgun Gothic, sans-serif`;
+      ctx.fillStyle = color;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+
+      let line = "";
+      const lines = [];
+      for (const ch of value) {
+        const test = line + ch;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = ch;
+        } else {
+          line = test;
+        }
+        if (lines.length >= 2) break;
+      }
+      if (line && lines.length < 2) lines.push(line);
+      lines.slice(0, 2).forEach((item, index) => ctx.fillText(item, x, y + index * lineHeight));
+      ctx.restore();
+    }
+
+    function loadDraftCanvasImage(champion) {
+      if (!champion || String(champion).includes("❌")) return Promise.resolve(null);
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = getChampionImage(champion);
+      });
+    }
+
+    function drawDraftImageCover(ctx, img, x, y, w, h, r = 16) {
+      ctx.save();
+      drawDraftRoundRect(ctx, x, y, w, h, r);
+      ctx.clip();
+      if (img) {
+        const scale = Math.max(w / img.width, h / img.height);
+        const sw = img.width * scale;
+        const sh = img.height * scale;
+        ctx.drawImage(img, x + (w - sw) / 2, y + (h - sh) / 2, sw, sh);
+      } else {
+        const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+        grad.addColorStop(0, "#151d33");
+        grad.addColorStop(1, "#050812");
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, w, h);
+      }
+      ctx.restore();
+    }
+
+    function drawDraftExportBan(ctx, champion, img, x, y, color) {
+      drawDraftImageCover(ctx, img, x, y, 70, 70, 12);
+      ctx.save();
+      ctx.globalAlpha = 0.62;
+      ctx.fillStyle = "#05070d";
+      ctx.fillRect(x, y, 70, 70);
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.moveTo(x + 13, y + 13);
+      ctx.lineTo(x + 57, y + 57);
+      ctx.moveTo(x + 57, y + 13);
+      ctx.lineTo(x + 13, y + 57);
+      ctx.stroke();
+      ctx.restore();
+
+      if (!champion || String(champion).includes("❌")) drawDraftText(ctx, "NO", x + 35, y + 35, 16, "#9ca8c7", "center", 900);
+    }
+
+    function drawDraftExportPick(ctx, pick, img, x, y, w, side) {
+      const isBlue = side === "blue";
+      const color = isBlue ? "#35a8ff" : "#ff4769";
+      const bg = ctx.createLinearGradient(x, y, x + w, y + 96);
+      bg.addColorStop(0, isBlue ? "rgba(24,82,132,0.90)" : "rgba(116,32,52,0.90)");
+      bg.addColorStop(1, "rgba(7,11,20,0.96)");
+
+      ctx.save();
+      drawDraftRoundRect(ctx, x, y, w, 96, 18);
+      ctx.fillStyle = bg;
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+      ctx.restore();
+
+      const imgX = isBlue ? x + 18 : x + w - 88;
+      drawDraftImageCover(ctx, img, imgX, y + 14, 68, 68, 14);
+
+      const textX = isBlue ? x + 104 : x + 22;
+      drawDraftText(ctx, `${pick.index + 1} PICK`, textX, y + 28, 17, "#9aa7c8", "left", 800);
+      drawDraftWrappedText(ctx, pick.name || "-", textX, y + 57, w - 132, 24, 24, "#ffffff", 900);
+    }
+
+    async function saveDraftAsImage() {
+      if (currentDraftStep < draftSequence.length) return;
+
+      const btn = document.getElementById("draftSaveImageButton");
+      const oldText = btn ? btn.textContent : "";
+
+      try {
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "저장 중...";
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 1920;
+        canvas.height = 1080;
+        const ctx = canvas.getContext("2d");
+
+        const bg = ctx.createLinearGradient(0, 0, 1920, 1080);
+        bg.addColorStop(0, "#050814");
+        bg.addColorStop(0.45, "#0b1020");
+        bg.addColorStop(1, "#070913");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, 1920, 1080);
+
+        ctx.save();
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = "#d4af37";
+        ctx.beginPath();
+        ctx.arc(960, 80, 360, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        drawDraftText(ctx, "TEAM.GG DRAFT", 960, 88, 46, "#f1c84d", "center", 900);
+        drawDraftText(ctx, "FINAL LOCK-IN", 960, 136, 20, "#b8c0dc", "center", 800);
+
+        const bluePanel = ctx.createLinearGradient(90, 180, 850, 940);
+        bluePanel.addColorStop(0, "rgba(18,67,110,0.94)");
+        bluePanel.addColorStop(1, "rgba(7,11,20,0.95)");
+        ctx.save();
+        drawDraftRoundRect(ctx, 80, 170, 760, 820, 28);
+        ctx.fillStyle = bluePanel;
+        ctx.fill();
+        ctx.strokeStyle = "#35a8ff";
+        ctx.lineWidth = 3;
+        ctx.shadowColor = "rgba(53,168,255,0.38)";
+        ctx.shadowBlur = 24;
+        ctx.stroke();
+        ctx.restore();
+
+        const redPanel = ctx.createLinearGradient(1080, 180, 1840, 940);
+        redPanel.addColorStop(0, "rgba(122,33,54,0.94)");
+        redPanel.addColorStop(1, "rgba(7,11,20,0.95)");
+        ctx.save();
+        drawDraftRoundRect(ctx, 1080, 170, 760, 820, 28);
+        ctx.fillStyle = redPanel;
+        ctx.fill();
+        ctx.strokeStyle = "#ff4769";
+        ctx.lineWidth = 3;
+        ctx.shadowColor = "rgba(255,71,105,0.38)";
+        ctx.shadowBlur = 24;
+        ctx.stroke();
+        ctx.restore();
+
+        drawDraftText(ctx, "BLUE TEAM", 460, 220, 38, "#7fd0ff", "center", 900);
+        drawDraftText(ctx, "RED TEAM", 1460, 220, 38, "#ff8ea4", "center", 900);
+        drawDraftText(ctx, "VS", 960, 530, 76, "rgba(241,200,77,0.85)", "center", 900);
+
+        const loadJobs = [];
+        for (const team of ["blue", "red"]) {
+          draftSelections[team].bans.forEach(champ => loadJobs.push(loadDraftCanvasImage(champ)));
+          draftSelections[team].picks.forEach(champ => loadJobs.push(loadDraftCanvasImage(champ)));
+        }
+        const images = await Promise.all(loadJobs);
+        let cursor = 0;
+        const blueBanImgs = images.slice(cursor, cursor += 5);
+        const bluePickImgs = images.slice(cursor, cursor += 5);
+        const redBanImgs = images.slice(cursor, cursor += 5);
+        const redPickImgs = images.slice(cursor, cursor += 5);
+
+        drawDraftText(ctx, "BANS", 140, 288, 20, "#9aa7c8", "left", 800);
+        drawDraftText(ctx, "BANS", 1140, 288, 20, "#9aa7c8", "left", 800);
+        draftSelections.blue.bans.forEach((champ, i) => drawDraftExportBan(ctx, champ, blueBanImgs[i], 140 + i * 82, 315, "#35a8ff"));
+        draftSelections.red.bans.forEach((champ, i) => drawDraftExportBan(ctx, champ, redBanImgs[i], 1140 + i * 82, 315, "#ff4769"));
+
+        draftSelections.blue.picks.forEach((champ, i) => drawDraftExportPick(ctx, { name: champ, index: i }, bluePickImgs[i], 130, 425 + i * 108, 650, "blue"));
+        draftSelections.red.picks.forEach((champ, i) => drawDraftExportPick(ctx, { name: champ, index: i }, redPickImgs[i], 1140, 425 + i * 108, 650, "red"));
+
+        drawDraftText(ctx, "Generated by LOL 내전 통합 생성기", 960, 1022, 18, "rgba(184,192,220,0.78)", "center", 700);
+
+        const link = document.createElement("a");
+        const now = new Date();
+        const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+        link.download = `TEAM_GG_DRAFT_${stamp}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      } catch (error) {
+        console.error(error);
+        alert("이미지 저장에 실패했습니다. 이미지 파일 경로나 브라우저 설정을 확인해주세요.");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = oldText || "이미지 저장";
+          setDraftSaveButtonState();
+        }
+      }
+    }
+
+
+    function clearDraftPickDragVisuals() {
+      document.querySelectorAll(".pick-slot-new").forEach(slot => {
+        slot.classList.remove("draft-pick-dragging", "draft-pick-drop-over");
+      });
+    }
+
+    function setupDraftPickDragReorder() {
+      const draftComplete = currentDraftStep >= draftSequence.length;
+
+      ["blue", "red"].forEach(team => {
+        for (let i = 0; i < 5; i++) {
+          const slot = document.getElementById(`${team}-pick-${i}`);
+          if (!slot) continue;
+
+          const hasPick = !!draftSelections[team].picks[i];
+          slot.dataset.draftTeam = team;
+          slot.dataset.draftIndex = String(i);
+          slot.draggable = draftComplete && hasPick;
+          slot.classList.toggle("draft-pick-draggable", draftComplete && hasPick);
+
+          slot.ondragstart = event => {
+            if (!draftComplete || !hasPick) {
+              event.preventDefault();
+              return;
+            }
+            draftPickDragInfo = { team, index: i };
+            slot.classList.add("draft-pick-dragging");
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", `${team}:${i}`);
+          };
+
+          slot.ondragover = event => {
+            if (!draftPickDragInfo || draftPickDragInfo.team !== team) return;
+            event.preventDefault();
+            slot.classList.add("draft-pick-drop-over");
+            event.dataTransfer.dropEffect = "move";
+          };
+
+          slot.ondragleave = () => {
+            slot.classList.remove("draft-pick-drop-over");
+          };
+
+          slot.ondrop = event => {
+            event.preventDefault();
+            if (!draftPickDragInfo || draftPickDragInfo.team !== team) {
+              clearDraftPickDragVisuals();
+              draftPickDragInfo = null;
+              return;
+            }
+
+            const fromIndex = draftPickDragInfo.index;
+            const toIndex = i;
+            if (fromIndex !== toIndex) {
+              const targetPicks = draftSelections[team].picks;
+              const [movedPick] = targetPicks.splice(fromIndex, 1);
+              targetPicks.splice(toIndex, 0, movedPick);
+              saveData();
+              initDraftCenterGrid();
+            }
+
+            clearDraftPickDragVisuals();
+            draftPickDragInfo = null;
+          };
+
+          slot.ondragend = () => {
+            clearDraftPickDragVisuals();
+            draftPickDragInfo = null;
+          };
+        }
+      });
+    }
+
+    function resetDraftInfo() {
+      if (!confirm("현재 진행 중인 드래프트 밴픽 상황을 초기화하시겠습니까?")) return;
+      currentDraftStep = 0;
+      draftSelections = {
+        blue: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] },
+        red: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] }
+      };
+      saveData();
+      initDraftCenterGrid();
+    }
+
+    function refreshDraftUIHighlights() {
+      document.querySelectorAll(".ban-slot-new, .pick-slot-new").forEach(el => {
+        el.classList.remove("active");
+      });
+
+      for (let i = 0; i < 5; i++) {
+        const bBan = draftSelections.blue.bans[i];
+        const bSlot = document.getElementById(`blue-ban-${i}`);
+        bSlot.innerHTML = `<span class="slot-num">${i==0?1:i==1?2:i==2?3:i==3?7:8}</span>`;
+        if (bBan) {
+          if (bBan.includes("❌")) {
+            bSlot.innerHTML += `<div class="ban-x-overlay" style="font-size:13px; color:#b8c0dc;">NO BAN</div>`;
+          } else {
+            bSlot.innerHTML += `<img src="${getChampionImage(bBan)}" onerror="this.style.display='none';"/> <div class="ban-x-overlay" style="font-size:18px;">❌</div>`;
+          }
+        }
+
+        const rBan = draftSelections.red.bans[i];
+        const rSlot = document.getElementById(`red-ban-${i}`);
+        rSlot.innerHTML = `<span class="slot-num">${i==0?4:i==1?5:i==2?6:i==3?9:10}</span>`;
+        if (rBan) {
+          if (rBan.includes("❌")) {
+            rSlot.innerHTML += `<div class="ban-x-overlay" style="font-size:13px; color:#b8c0dc;">NO BAN</div>`;
+          } else {
+            rSlot.innerHTML += `<img src="${getChampionImage(rBan)}" onerror="this.style.display='none';"/> <div class="ban-x-overlay" style="font-size:18px;">❌</div>`;
+          }
+        }
+      }
+
+      for (let i = 0; i < 5; i++) {
+        const bPick = draftSelections.blue.picks[i];
+        const bImg = document.getElementById(`blue-img-${i}`);
+        const bName = document.getElementById(`blue-name-${i}`);
+        if (bPick) {
+          bName.textContent = bPick;
+          if (!bPick.includes("❌")) {
+            bImg.src = getChampionImage(bPick);
+            bImg.style.display = "block";
+          } else { bImg.style.display = "none"; }
+        } else {
+          bName.textContent = "-"; bImg.style.display = "none";
+        }
+
+        const rPick = draftSelections.red.picks[i];
+        const rImg = document.getElementById(`red-img-${i}`);
+        const rName = document.getElementById(`red-name-${i}`);
+        if (rPick) {
+          rName.textContent = rPick;
+          if (!rPick.includes("❌")) {
+            rImg.src = getChampionImage(rPick);
+            rImg.style.display = "block";
+          } else { rImg.style.display = "none"; }
+        } else {
+          rName.textContent = "-"; rImg.style.display = "none";
+        }
+      }
+
+      if (currentDraftStep < draftSequence.length) {
+        const nextInfo = draftSequence[currentDraftStep];
+        setDraftTurnTheme(nextInfo.team);
+        document.getElementById("draftPhaseText").textContent = nextInfo.label;
+        const statusText = document.getElementById("draftStatusText");
+        statusText.classList.remove("complete");
+        statusText.textContent = nextInfo.type === "ban" ? `${nextInfo.team.toUpperCase()} SIDE BAN · 30초 후 자동 노밴` : `${nextInfo.team.toUpperCase()} SIDE PICK · 30초 후 자동 랜덤픽`;
+        
+        const targetElementId = `${nextInfo.team}-${nextInfo.type}-${nextInfo.index}`;
+        const targetEl = document.getElementById(targetElementId);
+        if (targetEl) targetEl.classList.add("active");
+
+        setNoBanButtonState();
+        setDraftSaveButtonState();
+        restartDraftTimer();
+      } else {
+        setDraftTurnTheme(null);
+        stopDraftTimer(true);
+        document.getElementById("draftPhaseText").textContent = "DRAFT COMPLETE";
+        const statusText = document.getElementById("draftStatusText");
+        statusText.textContent = "FINAL LOCK-IN · BLUE SIDE vs RED SIDE";
+        statusText.classList.add("complete");
+        setNoBanButtonState();
+        setDraftSaveButtonState();
+      }
+
+      setupDraftPickDragReorder();
+    }
+
+    function setupChampionSearch(inputId, dropdownId, onSelect) {
+      const input = document.getElementById(inputId), dropdown = document.getElementById(dropdownId);
+      if (!input || !dropdown) return;
+
+      const openDropdown = () => {
+        renderChampionDropdown(dropdownId, inputId, getFilteredChampions(input.value), onSelect);
+      };
+
+      input.addEventListener("input", () => {
+        onSelect("");
+        openDropdown();
+      });
+
+      input.addEventListener("focus", () => {
+        openDropdown();
+      });
+
+      input.addEventListener("keydown", event => {
+        if (event.key === "Escape") dropdown.style.display = "none";
+      });
+
+      document.addEventListener("click", event => {
+        if (!event.target.closest(".champion-search-box")) dropdown.style.display = "none";
+      });
+    }
+
+    function renderChampionDropdown(dropdownId, inputId, champions, onSelect) {
+      const dropdown = document.getElementById(dropdownId), input = document.getElementById(inputId);
+      dropdown.innerHTML = "";
+      if (champions.length === 0) {
+        dropdown.innerHTML = `<div class="no-result">검색 결과 없음</div>`;
+        dropdown.style.display = "block";
+        return;
+      }
+
+      champions.forEach(champion => {
+        const option = document.createElement("div");
+        option.className = "champion-option";
+        option.textContent = champion;
+        option.addEventListener("click", () => {
+          input.value = champion;
+          onSelect(champion);
+          dropdown.style.display = "none";
+        });
+        dropdown.appendChild(option);
+      });
+      dropdown.style.display = "block";
+    }
+
+
+
+    function closeInlineDropdowns() {
+      document.querySelectorAll(".inline-edit.open").forEach(box => box.classList.remove("open"));
+    }
+
+    function toggleInlineDropdown(button) {
+      event.stopPropagation();
+      const box = button.closest(".inline-edit");
+      if (!box) return;
+      const isOpen = box.classList.contains("open");
+      closeInlineDropdowns();
+      if (!isOpen) box.classList.add("open");
+    }
+
+    function setupTierDropdown() {
+      const input = document.getElementById("tier");
+      const dropdown = document.getElementById("tierDropdown");
+      const box = document.querySelector(".tier-select-box");
+      if (!input || !dropdown || !box) return;
+
+      input.addEventListener("click", event => {
+        event.stopPropagation();
+        dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+      });
+
+      dropdown.querySelectorAll(".tier-option").forEach(option => {
+        option.addEventListener("click", event => {
+          event.stopPropagation();
+          input.value = option.dataset.value;
+          dropdown.style.display = "none";
+        });
+      });
+
+      document.addEventListener("click", event => {
+        if (!event.target.closest(".tier-select-box")) dropdown.style.display = "none";
+      });
+    }
+
+    function setupNicknameSearch() {
+      const input = document.getElementById("nicknameSearch"), dropdown = document.getElementById("nicknameDropdown");
+      if (!input || !dropdown) return;
+
+      const openDropdown = () => {
+        selectedSavedPlayer = null;
+        renderNicknameDropdown(getFilteredSavedPlayers(input.value));
+      };
+
+      input.addEventListener("input", openDropdown);
+      input.addEventListener("focus", openDropdown);
+      input.addEventListener("keydown", event => {
+        if (event.key === "Escape") dropdown.style.display = "none";
+      });
+
+      document.addEventListener("click", event => {
+        if (!event.target.closest(".nickname-search-box")) dropdown.style.display = "none";
+      });
+    }
+
+    function renderNicknameDropdown(filteredPlayers) {
+      const input = document.getElementById("nicknameSearch"), dropdown = document.getElementById("nicknameDropdown");
+      dropdown.innerHTML = "";
+      if (filteredPlayers.length === 0) {
+        dropdown.innerHTML = `<div class="no-result">추가 가능한 저장 선수 없음</div>`;
+        dropdown.style.display = "block";
+        return;
+      }
+
+      filteredPlayers.forEach(player => {
+        const option = document.createElement("div");
+        option.className = "nickname-option";
+        const championText = player.champion ? ` / ${escapeHtml(player.champion)}` : "";
+        const lineText = player.line ? ` / ${escapeHtml(player.line)}` : "";
+        option.innerHTML = `<strong>${escapeHtml(player.nickname)}</strong><span class="db-meta">${escapeHtml(player.tier)}${lineText}${championText} / ${player.score}점</span>`;
+        option.addEventListener("click", () => {
+          input.value = player.nickname;
+          selectedSavedPlayer = player;
+          dropdown.style.display = "none";
+          addSavedPlayerFromNickname();
+        });
+        dropdown.appendChild(option);
+      });
+      dropdown.style.display = "block";
+    }
+
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".inline-edit")) closeInlineDropdowns();
+    });
+
+
+
+    /* ================= SEARCH DROPDOWN FINAL PATCH v2 =================
+       - 검색창 클릭 시 전체 목록 가나다순 노출
+       - 한글 / 초성 / 영어 별칭 검색
+       - 드롭다운 내부 스크롤
+       - 클릭 즉시 챔피언 선택 또는 저장 선수 추가
+    */
+    const SEARCH_INITIALS_V2 = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+
+    function stripSearchV2(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[\s\-_.\/()'’·]/g, "");
+    }
+
+    function getInitialsV2(value) {
+      return String(value || "").split("").map(char => {
+        const code = char.charCodeAt(0) - 44032;
+        if (code < 0 || code > 11171) return char;
+        return SEARCH_INITIALS_V2[Math.floor(code / 588)] || char;
+      }).join("");
+    }
+
+    function searchMatchV2(target, keyword, aliases = []) {
+      const needle = stripSearchV2(keyword);
+      if (!needle) return true;
+      const haystacks = [
+        target,
+        getInitialsV2(target),
+        ...aliases
+      ].map(stripSearchV2);
+      return haystacks.some(text => text.includes(needle));
+    }
+
+    function sortKoreanV2(list, getter = item => item) {
+      return [...list].sort((a, b) => String(getter(a) || "").localeCompare(String(getter(b) || ""), "ko", { numeric: true, sensitivity: "base" }));
+    }
+
+    function getChampionAliasesV2(champion) {
+      return championEnglishAliases && championEnglishAliases[champion] ? championEnglishAliases[champion] : [];
+    }
+
+    function getFilteredChampionsV2(keyword = "") {
+      return sortKoreanV2(championList).filter(champion => searchMatchV2(champion, keyword, getChampionAliasesV2(champion)));
+    }
+
+    function getAvailableSavedPlayersV2() {
+      const registered = new Set(players.map(player => normalizeSearchText(player.nickname)));
+      return sortKoreanV2(
+        playerDB.filter(player => !registered.has(normalizeSearchText(player.nickname))),
+        player => player.nickname
+      );
+    }
+
+    function getFilteredSavedPlayersV2(keyword = "") {
+      return getAvailableSavedPlayersV2().filter(player => {
+        const aliases = [player.tier, player.line, player.champion].filter(Boolean);
+        return searchMatchV2(player.nickname, keyword, aliases);
+      });
+    }
+
+    function openSearchDropdownV2(dropdown) {
+      dropdown.classList.add("is-open");
+      dropdown.style.display = "block";
+    }
+
+    function closeSearchDropdownV2(dropdown) {
+      dropdown.classList.remove("is-open");
+      dropdown.style.display = "none";
+    }
+
+    function renderChampionDropdownV2(input, dropdown, onSelect) {
+      const keyword = input.value;
+      const champions = getFilteredChampionsV2(keyword);
+      dropdown.innerHTML = "";
+
+      if (champions.length === 0) {
+        dropdown.innerHTML = `<div class="no-result">검색 결과 없음</div>`;
+        openSearchDropdownV2(dropdown);
+        return;
+      }
+
+      champions.forEach(champion => {
+        const option = document.createElement("div");
+        option.className = "champion-option";
+        option.innerHTML = `
+          <img class="search-champion-icon" src="${getChampionImage(champion)}" alt="">
+          <span class="search-main-text">${escapeHtml(champion)}</span>
+        `;
+        option.addEventListener("mousedown", event => {
+          event.preventDefault();
+          input.value = champion;
+          onSelect(champion);
+          closeSearchDropdownV2(dropdown);
+        });
+        dropdown.appendChild(option);
+      });
+      openSearchDropdownV2(dropdown);
+    }
+
+    function setupChampionSearchV2(inputId, dropdownId, onSelect) {
+      const input = document.getElementById(inputId);
+      const dropdown = document.getElementById(dropdownId);
+      if (!input || !dropdown) return;
+
+      input.setAttribute("autocomplete", "off");
+
+      input.addEventListener("focus", () => renderChampionDropdownV2(input, dropdown, onSelect));
+      input.addEventListener("click", () => renderChampionDropdownV2(input, dropdown, onSelect));
+      input.addEventListener("input", () => {
+        onSelect("");
+        renderChampionDropdownV2(input, dropdown, onSelect);
+      });
+      input.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeSearchDropdownV2(dropdown);
+      });
+    }
+
+    function renderNicknameDropdownV2(input, dropdown) {
+      const filteredPlayers = getFilteredSavedPlayersV2(input.value);
+      dropdown.innerHTML = "";
+
+      if (filteredPlayers.length === 0) {
+        dropdown.innerHTML = `<div class="no-result">추가 가능한 저장 선수 없음</div>`;
+        openSearchDropdownV2(dropdown);
+        return;
+      }
+
+      filteredPlayers.forEach(player => {
+        const option = document.createElement("div");
+        option.className = "nickname-option";
+        const championText = player.champion ? ` / ${escapeHtml(player.champion)}` : "";
+        const lineText = player.line ? ` / ${escapeHtml(player.line)}` : "";
+        option.innerHTML = `<strong>${escapeHtml(player.nickname)}</strong><span class="db-meta">${escapeHtml(player.tier)}${lineText}${championText} / ${Number(player.score) || 0}점</span>`;
+        option.addEventListener("mousedown", event => {
+          event.preventDefault();
+          input.value = player.nickname;
+          selectedSavedPlayer = player;
+          closeSearchDropdownV2(dropdown);
+          addSavedPlayerFromNickname();
+        });
+        dropdown.appendChild(option);
+      });
+      openSearchDropdownV2(dropdown);
+    }
+
+    function setupNicknameSearchV2() {
+      const input = document.getElementById("nicknameSearch");
+      const dropdown = document.getElementById("nicknameDropdown");
+      if (!input || !dropdown) return;
+
+      input.setAttribute("autocomplete", "off");
+
+      input.addEventListener("focus", () => {
+        selectedSavedPlayer = null;
+        renderNicknameDropdownV2(input, dropdown);
+      });
+      input.addEventListener("click", () => {
+        selectedSavedPlayer = null;
+        renderNicknameDropdownV2(input, dropdown);
+      });
+      input.addEventListener("input", () => {
+        selectedSavedPlayer = null;
+        renderNicknameDropdownV2(input, dropdown);
+      });
+      input.addEventListener("keydown", event => {
+        if (event.key === "Escape") closeSearchDropdownV2(dropdown);
+      });
+    }
+
+    document.addEventListener("mousedown", event => {
+      if (!event.target.closest(".champion-search-box")) {
+        const dropdown = document.getElementById("championDropdown");
+        if (dropdown) closeSearchDropdownV2(dropdown);
+      }
+      if (!event.target.closest(".nickname-search-box")) {
+        const dropdown = document.getElementById("nicknameDropdown");
+        if (dropdown) closeSearchDropdownV2(dropdown);
+      }
+    });
+
+    // 기존 setup을 한 번 더 덮어써서, 실제 실행되는 검색 로직을 v2로 고정한다.
+    setupChampionSearchV2("championSearch", "championDropdown", value => { selectedChampion = value; });
+    setupNicknameSearchV2();
+
+
+    async function initializeApp() {
+      isLoading = true;
+      await loadPlayerDBFromServer();
+      loadData();
+      isLoading = false;
+      saveData();
+    }
+    setupTierDropdown();
+    initializeApp();
+  </script>
+</body>
+</html>
