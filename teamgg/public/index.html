@@ -117,6 +117,41 @@
     .sub-button { background: var(--border-soft); color: var(--text-main); }
     .sub-button:hover { background: var(--card-top); }
     .help { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-top: 12px; }
+
+    .temporary-player-panel {
+      margin: 0 0 18px;
+      padding: 14px;
+      border: 1px solid var(--border-main);
+      border-radius: 14px;
+      background: var(--panel-soft);
+    }
+    .temporary-player-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .nickname-edit-input {
+      width: 100%;
+      margin-bottom: 8px;
+      text-align: center;
+      font-weight: bold;
+      color: #ffffff;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid var(--border-soft);
+    }
+    .temporary-badge {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.08);
+      border: 1px dashed var(--border-soft);
+    }
+
     .saved-player-panel { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--border-main); }
     .saved-player-panel h3 { margin: 0 0 12px; color: var(--accent); font-size: 18px; }
     .champion-search-box, .nickname-search-box { position: relative; width: 100%; }
@@ -1965,6 +2000,53 @@
     .player-card.edit-pulse {
       animation: editPulse 0.28s ease;
     }
+
+    .player-card {
+      will-change: transform, opacity, filter;
+    }
+    .player-card.card-delete-out {
+      pointer-events: none !important;
+      animation: cardDeleteOut 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .player-card.card-clear-out {
+      pointer-events: none !important;
+      animation: cardClearOut 0.46s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation-delay: var(--clear-delay, 0ms);
+    }
+    @keyframes cardDeleteOut {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+      35% {
+        opacity: 1;
+        transform: translateY(-5px) scale(1.025);
+        filter: blur(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(28px, 18px) scale(0.9) rotate(2deg);
+        filter: blur(1.2px);
+      }
+    }
+    @keyframes cardClearOut {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+      40% {
+        opacity: 1;
+        transform: translateY(-4px) scale(1.018);
+        filter: blur(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(26px) scale(0.88);
+        filter: blur(1.3px);
+      }
+    }
     @keyframes editPulse {
       0% { transform: scale(1); box-shadow: 0 0 0 rgba(212,175,55,0); }
       50% { transform: scale(1.025); box-shadow: 0 0 18px var(--glow); }
@@ -2041,6 +2123,86 @@
       color: #fff;
       font-weight: normal;
     }
+
+    .card-champion-search-box {
+      position: relative;
+      width: min(210px, calc(100% - 22px));
+      z-index: 30;
+    }
+    .card-champion-input {
+      width: 100%;
+      min-width: 0;
+      padding: 7px 28px 7px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: #9b3e3a;
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.16);
+    }
+    .card-champion-input::placeholder {
+      color: rgba(255,255,255,0.88);
+      opacity: 1;
+    }
+    .card-champion-search-box::after {
+      content: "⌄";
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-53%);
+      color: #fff;
+      pointer-events: none;
+      font-size: 13px;
+      font-weight: bold;
+      opacity: 0.95;
+    }
+    .card-champion-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(280px, 86vw);
+      max-height: 260px;
+      overflow-y: auto;
+      background: #0e1426;
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      z-index: 30000;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.5);
+      padding: 7px;
+      overscroll-behavior: contain;
+    }
+    .card-champion-search-box.open .card-champion-dropdown {
+      display: block;
+    }
+    .card-champion-option {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 9px;
+      cursor: pointer;
+      color: var(--text-main);
+      border-radius: 9px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      font-size: 13px;
+      font-weight: bold;
+      text-align: left;
+      user-select: none;
+    }
+    .card-champion-option:last-child { border-bottom: none; }
+    .card-champion-option:hover { background: var(--card-top); color: #fff; }
+    .card-champion-option img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent);
+      background: var(--panel-soft);
+    }
     .card-edit-caption {
       display: none !important;
     }
@@ -2048,6 +2210,31 @@
   
 
     /* ================= SEARCH DROPDOWN FINAL PATCH v2 ================= */
+
+
+    /* v17 fix: 등록 명단 챔피언 검색창 포커스/레이어 보정 */
+    .card-list {
+      overflow: visible !important;
+    }
+    .player-card {
+      position: relative !important;
+    }
+    .player-card.card-search-open {
+      z-index: 99999 !important;
+      overflow: visible !important;
+      transform: translateZ(0);
+    }
+    .player-card.card-search-open .card-champion-search-box {
+      z-index: 100000 !important;
+    }
+    .player-card.card-search-open .card-champion-dropdown {
+      z-index: 100001 !important;
+    }
+    .card-champion-input:focus::placeholder {
+      color: transparent !important;
+      opacity: 0 !important;
+    }
+
     .champion-search-box, .nickname-search-box {
       position: relative !important;
       width: 100% !important;
@@ -2389,6 +2576,12 @@
 
     <div id="tab-player-register" class="section active">
       <h2 id="registerTitle">1. 선수 등록</h2>
+      <div class="temporary-player-panel">
+        <div class="temporary-player-actions">
+          <button type="button" class="sub-button" onclick="addTemporaryPlayers(1)">임시 선수 1명 추가</button>
+          <button type="button" class="sub-button" onclick="addTemporaryPlayers(10)">임시 선수 10명 추가</button>
+        </div>
+      </div>
       <div id="registerGrid" class="direct-grid">
         <input id="nickname" type="text" placeholder="닉네임" />
         <div class="tier-select-box">
@@ -2396,17 +2589,10 @@
           <div id="tierDropdown" class="tier-dropdown">
             <div class="tier-option" data-value="챌린저">챌린저</div>
             <div class="tier-option" data-value="그랜드마스터">그랜드마스터</div>
-            <div class="tier-option" data-value="마스터 1000점이상">마스터 1000점이상</div>
-            <div class="tier-option" data-value="마스터 900~999점">마스터 900~999점</div>
-            <div class="tier-option" data-value="마스터 800~899점">마스터 800~899점</div>
-            <div class="tier-option" data-value="마스터 700~799점">마스터 700~799점</div>
-            <div class="tier-option" data-value="마스터 600~699점">마스터 600~699점</div>
-            <div class="tier-option" data-value="마스터 500~599점">마스터 500~599점</div>
-            <div class="tier-option" data-value="마스터 400~499점">마스터 400~499점</div>
-            <div class="tier-option" data-value="마스터 300~399점">마스터 300~399점</div>
-            <div class="tier-option" data-value="마스터 200~299점">마스터 200~299점</div>
-            <div class="tier-option" data-value="마스터 100~199점">마스터 100~199점</div>
-            <div class="tier-option" data-value="마스터 0~99점">마스터 0~99점</div>
+            <div class="tier-option" data-value="마스터 1000+">마스터 1000+</div>
+            <div class="tier-option" data-value="마스터 700~999">마스터 700~999</div>
+            <div class="tier-option" data-value="마스터 400~699">마스터 400~699</div>
+            <div class="tier-option" data-value="마스터 0~399">마스터 0~399</div>
             <div class="tier-option" data-value="다이아1">다이아1</div>
             <div class="tier-option" data-value="다이아2">다이아2</div>
             <div class="tier-option" data-value="다이아3">다이아3</div>
@@ -2660,52 +2846,61 @@ const championList = [
     ];
 
 const scoreTable = {
-      "챌린저": {"탑": 80, "정글": 81, "미드": 76, "원딜": 79, "서폿": 74},
-      "그랜드마스터": {"탑": 75, "정글": 76, "미드": 71, "원딜": 74, "서폿": 69},
-      "마스터 1000점이상": {"탑": 70, "정글": 71, "미드": 67, "원딜": 70, "서폿": 65},
-      "마스터 900~999점": {"탑": 68, "정글": 69, "미드": 65, "원딜": 68, "서폿": 63},
-      "마스터 800~899점": {"탑": 66, "정글": 67, "미드": 63, "원딜": 66, "서폿": 61},
-      "마스터 700~799점": {"탑": 64, "정글": 65, "미드": 61, "원딜": 64, "서폿": 59},
-      "마스터 600~699점": {"탑": 61, "정글": 62, "미드": 58, "원딜": 61, "서폿": 56},
-      "마스터 500~599점": {"탑": 59, "정글": 60, "미드": 56, "원딜": 59, "서폿": 54},
-      "마스터 400~499점": {"탑": 57, "정글": 58, "미드": 54, "원딜": 57, "서폿": 52},
-      "마스터 300~399점": {"탑": 55, "정글": 56, "미드": 52, "원딜": 55, "서폿": 49},
-      "마스터 200~299점": {"탑": 51, "정글": 52, "미드": 49, "원딜": 52, "서폿": 47},
-      "마스터 100~199점": {"탑": 49, "정글": 50, "미드": 47, "원딜": 50, "서폿": 45},
-      "마스터 0~99점": {"탑": 47, "정글": 48, "미드": 45, "원딜": 48, "서폿": 43},
-      "다이아1": {"탑": 43, "정글": 44, "미드": 41, "원딜": 44, "서폿": 39},
-      "다이아2": {"탑": 40, "정글": 41, "미드": 39, "원딜": 42, "서폿": 37},
-      "다이아3": {"탑": 38, "정글": 39, "미드": 37, "원딜": 40, "서폿": 36},
-      "다이아4": {"탑": 36, "정글": 37, "미드": 36, "원딜": 37, "서폿": 35},
-      "에메랄드1": {"탑": 34, "정글": 34, "미드": 33, "원딜": 34, "서폿": 34},
-      "에메랄드2": {"탑": 32, "정글": 32, "미드": 32, "원딜": 32, "서폿": 33},
-      "에메랄드3": {"탑": 31, "정글": 31, "미드": 30, "원딜": 30, "서폿": 32},
-      "에메랄드4": {"탑": 29, "정글": 29, "미드": 29, "원딜": 28, "서폿": 32},
-      "플래티넘1": {"탑": 27, "정글": 26, "미드": 26, "원딜": 25, "서폿": 31},
-      "플래티넘2": {"탑": 26, "정글": 24, "미드": 24, "원딜": 23, "서폿": 30},
-      "플래티넘3": {"탑": 25, "정글": 23, "미드": 23, "원딜": 22, "서폿": 29},
-      "플래티넘4": {"탑": 24, "정글": 22, "미드": 22, "원딜": 21, "서폿": 28},
-      "골드1": {"탑": 22, "정글": 19, "미드": 19, "원딜": 18, "서폿": 27},
-      "골드2": {"탑": 21, "정글": 18, "미드": 18, "원딜": 17, "서폿": 26},
-      "골드3": {"탑": 20, "정글": 17, "미드": 17, "원딜": 16, "서폿": 25},
-      "골드4": {"탑": 19, "정글": 16, "미드": 16, "원딜": 15, "서폿": 24},
-      "실버1": {"탑": 17, "정글": 14, "미드": 14, "원딜": 13, "서폿": 23},
-      "실버2": {"탑": 16, "정글": 13, "미드": 13, "원딜": 12, "서폿": 22},
-      "실버3": {"탑": 15, "정글": 12, "미드": 12, "원딜": 11, "서폿": 21},
-      "실버4이하": {"탑": 13, "정글": 11, "미드": 11, "원딜": 10, "서폿": 20}
+      "챌린저": {"탑": 75, "정글": 78, "미드": 80, "원딜": 76, "서폿": 70},
+      "그랜드마스터": {"탑": 71, "정글": 74, "미드": 75, "원딜": 71, "서폿": 66},
+      "마스터 1000+": {"탑": 68, "정글": 71, "미드": 72, "원딜": 68, "서폿": 63},
+      "마스터 700~999": {"탑": 64, "정글": 67, "미드": 68, "원딜": 65, "서폿": 60},
+      "마스터 400~699": {"탑": 60, "정글": 63, "미드": 64, "원딜": 61, "서폿": 56},
+      "마스터 0~399": {"탑": 56, "정글": 59, "미드": 60, "원딜": 57, "서폿": 53},
+      "다이아1": {"탑": 49, "정글": 51, "미드": 52, "원딜": 49, "서폿": 46},
+      "다이아2": {"탑": 46, "정글": 48, "미드": 49, "원딜": 47, "서폿": 43},
+      "다이아3": {"탑": 43, "정글": 45, "미드": 46, "원딜": 44, "서폿": 40},
+      "다이아4": {"탑": 40, "정글": 42, "미드": 43, "원딜": 41, "서폿": 38},
+      "에메랄드1": {"탑": 37, "정글": 38, "미드": 39, "원딜": 37, "서폿": 34},
+      "에메랄드2": {"탑": 35, "정글": 36, "미드": 37, "원딜": 35, "서폿": 33},
+      "에메랄드3": {"탑": 33, "정글": 34, "미드": 35, "원딜": 33, "서폿": 31},
+      "에메랄드4": {"탑": 31, "정글": 32, "미드": 33, "원딜": 31, "서폿": 29},
+      "플래티넘1": {"탑": 29, "정글": 30, "미드": 31, "원딜": 29, "서폿": 27},
+      "플래티넘2": {"탑": 27, "정글": 28, "미드": 29, "원딜": 28, "서폿": 26},
+      "플래티넘3": {"탑": 25, "정글": 26, "미드": 27, "원딜": 26, "서폿": 24},
+      "플래티넘4": {"탑": 24, "정글": 25, "미드": 25, "원딜": 24, "서폿": 22},
+      "골드1": {"탑": 22, "정글": 23, "미드": 23, "원딜": 22, "서폿": 20},
+      "골드2": {"탑": 20, "정글": 21, "미드": 21, "원딜": 20, "서폿": 18},
+      "골드3": {"탑": 18, "정글": 19, "미드": 19, "원딜": 18, "서폿": 17},
+      "골드4": {"탑": 16, "정글": 17, "미드": 17, "원딜": 16, "서폿": 15},
+      "실버1": {"탑": 14, "정글": 15, "미드": 15, "원딜": 14, "서폿": 13},
+      "실버2": {"탑": 13, "정글": 14, "미드": 14, "원딜": 13, "서폿": 12},
+      "실버3": {"탑": 12, "정글": 13, "미드": 13, "원딜": 12, "서폿": 11},
+      "실버4이하": {"탑": 11, "정글": 12, "미드": 12, "원딜": 11, "서폿": 10}
     };
 
 const scoreTableARAM = {
-      "챌린저": 80, "그랜드마스터": 75,
-      "마스터 1000점이상": 70, "마스터 900~999점": 68, "마스터 800~899점": 66,
-      "마스터 700~799점": 64, "마스터 600~699점": 60, "마스터 500~599점": 58,
-      "마스터 400~499점": 56, "마스터 300~399점": 53, "마스터 200~299점": 50,
-      "마스터 100~199점": 48, "마스터 0~99점": 46,
-      "다이아1": 43, "다이아2": 41, "다이아3": 39, "다이아4": 37,
-      "에메랄드1": 34, "에메랄드2": 32, "에메랄드3": 31, "에메랄드4": 29,
-      "플래티넘1": 27, "플래티넘2": 25, "플래티넘3": 24, "플래티넘4": 23,
-      "골드1": 21, "골드2": 19, "골드3": 18, "골드4": 17,
-      "실버1": 15, "실버2": 14, "실버3": 13, "실버4이하": 11
+      "챌린저": 80,
+      "그랜드마스터": 75,
+      "마스터 1000+": 72,
+      "마스터 700~999": 68,
+      "마스터 400~699": 64,
+      "마스터 0~399": 60,
+      "다이아1": 52,
+      "다이아2": 49,
+      "다이아3": 46,
+      "다이아4": 43,
+      "에메랄드1": 39,
+      "에메랄드2": 37,
+      "에메랄드3": 35,
+      "에메랄드4": 33,
+      "플래티넘1": 31,
+      "플래티넘2": 29,
+      "플래티넘3": 27,
+      "플래티넘4": 25,
+      "골드1": 23,
+      "골드2": 21,
+      "골드3": 19,
+      "골드4": 17,
+      "실버1": 15,
+      "실버2": 14,
+      "실버3": 13,
+      "실버4이하": 12
     };
 
 const punishments = [
@@ -2842,7 +3037,8 @@ const globalMissions = [
         tier: String(player?.tier || "").trim(),
         line: String(player?.line || "").trim(),
         champion: String(player?.champion || "").trim(),
-        score: Number(player?.score) || 0
+        score: Number(player?.score) || 0,
+        isDummy: Boolean(player?.isDummy)
       };
     }
 
@@ -3128,6 +3324,38 @@ const globalMissions = [
       alert(`${nickname} 선수가 등록되었습니다.`);
     }
 
+    function getNextTemporaryPlayerName() {
+      let number = 1;
+      const exists = name => players.some(player => normalizeSearchText(player.nickname) === normalizeSearchText(name));
+      while (exists(`임시 선수 ${number}`)) number += 1;
+      return `임시 선수 ${number}`;
+    }
+
+    function addTemporaryPlayers(amount) {
+      const count = Math.max(1, Number(amount) || 1);
+      for (let i = 0; i < count; i += 1) {
+        const nickname = getNextTemporaryPlayerName();
+        const line = currentMode === "aram" ? "칼바람" : (currentMode === "arena" ? "아레나" : "");
+        players.push({ nickname, tier: "", line, champion: "", score: 0, isDummy: true });
+      }
+      resetTeams();
+      renderPlayers();
+      renderPlayerDBCount();
+      saveData();
+    }
+
+    function isPlayerReadyForDB(player) {
+      const readyNickname = String(player?.nickname || "").trim() && !/^임시 선수 \d+$/.test(String(player?.nickname || "").trim());
+      const readyTier = getTierNames().includes(String(player?.tier || "").trim());
+      const readyLine = currentMode === "classic"
+        ? getClassicLineNames().includes(String(player?.line || "").trim())
+        : Boolean(String(player?.line || "").trim());
+      const readyChampion = (currentMode === "classic" || currentMode === "arena")
+        ? championList.includes(normalizeChampion(String(player?.champion || "").trim()))
+        : true;
+      return Boolean(readyNickname && readyTier && readyLine && readyChampion);
+    }
+
     function addPlayer(nickname, tier, line, champion = "", shouldRender = true, allowIncompleteLine = false) {
       if (!nickname || !tier || (!line && !allowIncompleteLine)) {
         alert("필수 항목을 입력해주세요.");
@@ -3166,12 +3394,15 @@ const globalMissions = [
         tier,
         line,
         champion: normalizedChampion,
-        score
+        score,
+        isDummy: false
       };
 
       players.push(playerData);
-      upsertPlayerDB(playerData);
-      savePlayerToServer(playerData);
+      if (isPlayerReadyForDB(playerData)) {
+        upsertPlayerDB(playerData);
+        savePlayerToServer(playerData);
+      }
       resetTeams();
 
       if (shouldRender) renderPlayers();
@@ -3241,6 +3472,7 @@ const globalMissions = [
       const targetNickname = normalizeSearchText(player.nickname);
       const existingPlayer = playerDB.find(savedPlayer => normalizeSearchText(savedPlayer.nickname) === targetNickname);
       const savedData = sanitizePlayer(player);
+      savedData.isDummy = false;
       savedData.score = calculateSavedDBScore(savedData);
       if (existingPlayer) {
         existingPlayer.tier = savedData.tier;
@@ -3253,7 +3485,9 @@ const globalMissions = [
     }
 
     function syncPlayerEditToDB(player, changedFields = []) {
+      if (!isPlayerReadyForDB(player)) return;
       const edited = sanitizePlayer(player);
+      edited.isDummy = false;
       const targetNickname = normalizeSearchText(edited.nickname);
       if (!targetNickname) return;
 
@@ -3315,28 +3549,28 @@ const globalMissions = [
           ? `<img src="${getChampionImage(player.champion)}" onerror="this.style.display='none'" class="champion-img" alt="${escapeHtml(player.champion)}">`
           : "";
 
-        const tierOptions = getTierNames().map(tierName =>
+        const tierOptions = `<option value="" ${player.tier ? "" : "selected"}>티어 선택</option>` + getTierNames().map(tierName =>
           `<option value="${escapeHtml(tierName)}" ${player.tier === tierName ? "selected" : ""}>${escapeHtml(tierName)}</option>`
         ).join("");
 
         const lineOptions = currentMode === "classic"
-          ? getClassicLineNames().map(lineName =>
+          ? `<option value="" ${player.line ? "" : "selected"}>라인 선택</option>` + getClassicLineNames().map(lineName =>
               `<option value="${escapeHtml(lineName)}" ${player.line === lineName ? "selected" : ""}>${escapeHtml(lineName)}</option>`
             ).join("")
           : `<option value="${escapeHtml(player.line || (currentMode === "aram" ? "칼바람" : "아레나"))}" selected>${escapeHtml(player.line || (currentMode === "aram" ? "칼바람" : "아레나"))}</option>`;
 
-        const championOptions = championList.map(championName =>
-          `<option value="${escapeHtml(championName)}" ${player.champion === championName ? "selected" : ""}>${escapeHtml(championName)}</option>`
-        ).join("");
-
         const championEdit = showChampion
-          ? `<select class="card-select champion-select" title="챔피언 수정" onchange="updatePlayerCardField(${index}, 'champion', this.value)">${championOptions}</select>`
+          ? `<div class="card-champion-search-box" onclick="event.stopPropagation();">
+              <input class="card-champion-input" type="text" value="${escapeHtml(player.champion || "")}" placeholder="챔피언 검색" autocomplete="off" title="챔피언 수정" onclick="openCardChampionSearch(event, ${index}, this)" onfocus="openCardChampionSearch(event, ${index}, this)" oninput="renderCardChampionSearch(${index}, this.value)" onkeydown="handleCardChampionSearchKey(event, ${index}, this)" onblur="if(!this.value.trim()) this.placeholder='챔피언 검색'" />
+              <div class="card-champion-dropdown"></div>
+            </div>`
           : "";
 
         card.innerHTML = `
           <button class="card-trash-btn" onclick="removePlayer(${index})" title="삭제">🗑️</button>
           ${imageHtml}
-          <div class="nickname" title="${escapeHtml(player.nickname)}">${escapeHtml(player.nickname)}</div>
+          ${player.isDummy ? `<div class="temporary-badge">임시</div>` : ""}
+          <input class="nickname-edit-input" value="${escapeHtml(player.nickname)}" title="닉네임 수정" onkeydown="if(event.key === 'Enter') this.blur()" onchange="updatePlayerCardField(${index}, 'nickname', this.value)" />
           <div class="card-edit-row">
             <select class="card-select tier" title="티어 수정" onchange="updatePlayerCardField(${index}, 'tier', this.value)">${tierOptions}</select>
             <select class="card-select line" title="라인 수정" ${currentMode === "classic" ? "" : "disabled"} onchange="updatePlayerCardField(${index}, 'line', this.value)">${lineOptions}</select>
@@ -3353,24 +3587,42 @@ const globalMissions = [
 
       const nextValue = String(value || "").trim();
 
+      if (field === "nickname") {
+        if (!nextValue) {
+          renderPlayers();
+          return;
+        }
+        const duplicate = players.some((otherPlayer, otherIndex) => otherIndex !== index && normalizeSearchText(otherPlayer.nickname) === normalizeSearchText(nextValue));
+        if (duplicate) {
+          alert("이미 등록 명단에 있는 선수입니다.");
+          renderPlayers();
+          return;
+        }
+        player.nickname = nextValue;
+      }
+
       if (field === "tier") {
-        if (!getTierNames().includes(nextValue)) return;
+        if (nextValue && !getTierNames().includes(nextValue)) return;
         player.tier = nextValue;
       }
 
       if (field === "line") {
-        if (currentMode === "classic" && !getClassicLineNames().includes(nextValue)) return;
+        if (currentMode === "classic" && nextValue && !getClassicLineNames().includes(nextValue)) return;
         player.line = nextValue;
       }
 
       if (field === "champion") {
-        const normalizedChampion = normalizeChampion(nextValue);
-        if (!championList.includes(normalizedChampion)) {
-          alert("챔피언 이름이 올바르지 않습니다.");
-          renderPlayers();
-          return;
+        if (!nextValue) {
+          player.champion = "";
+        } else {
+          const normalizedChampion = normalizeChampion(nextValue);
+          if (!championList.includes(normalizedChampion)) {
+            alert("챔피언 이름이 올바르지 않습니다.");
+            renderPlayers();
+            return;
+          }
+          player.champion = normalizedChampion;
         }
-        player.champion = normalizedChampion;
       }
 
       if (currentMode === "aram") player.line = "칼바람";
@@ -3378,7 +3630,10 @@ const globalMissions = [
 
       player.score = getModeScore(player);
 
-      syncPlayerEditToDB(player, [field]);
+      if (isPlayerReadyForDB(player)) {
+        player.isDummy = false;
+        syncPlayerEditToDB(player, [field, "tier", "line", "champion"]);
+      }
       resetTeams();
       renderPlayers();
       renderPlayerDBCount();
@@ -3394,24 +3649,156 @@ const globalMissions = [
     }
 
 
+    const playerCardAnimKeys = new WeakMap();
+    let nextPlayerCardAnimKey = 1;
+
+    function getPlayerCardAnimKey(player) {
+      if (!player || typeof player !== "object") return "";
+      if (!playerCardAnimKeys.has(player)) {
+        playerCardAnimKeys.set(player, `player-card-${nextPlayerCardAnimKey++}`);
+      }
+      return playerCardAnimKeys.get(player);
+    }
+
+    function capturePlayerCardLayout() {
+      const snapshot = new Map();
+
+      document.querySelectorAll(".player-card[data-player-index]").forEach(card => {
+        const index = Number(card.dataset.playerIndex);
+        const player = players[index];
+        if (!player) return;
+
+        const key = getPlayerCardAnimKey(player);
+        snapshot.set(key, card.getBoundingClientRect());
+      });
+
+      return snapshot;
+    }
+
+    function animatePlayerCardsFromSnapshot(snapshot) {
+      requestAnimationFrame(() => {
+        document.querySelectorAll(".player-card[data-player-index]").forEach(card => {
+          const index = Number(card.dataset.playerIndex);
+          const player = players[index];
+          if (!player) return;
+
+          const key = getPlayerCardAnimKey(player);
+          const before = snapshot.get(key);
+          if (!before) return;
+
+          const after = card.getBoundingClientRect();
+          const dx = before.left - after.left;
+          const dy = before.top - after.top;
+
+          if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+
+          card.animate(
+            [
+              {
+                transform: `translate(${dx}px, ${dy}px)`,
+                opacity: 0.92
+              },
+              {
+                transform: "translate(0, 0)",
+                opacity: 1
+              }
+            ],
+            {
+              duration: 420,
+              easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+            }
+          );
+        });
+      });
+    }
+
     function removePlayer(index) {
       if (!players[index]) return;
-      const removedPlayer = sanitizePlayer(players[index]);
-      players.splice(index, 1);
-      pushDeletedPlayerUndoEntry({ type: "delete", index, players: [removedPlayer] });
-      resetTeams();
-      renderPlayers();
-      renderPlayerDBCount();
-      saveData();
+
+      const card = document.querySelector(`.player-card[data-player-index="${index}"]`);
+      const layoutSnapshot = capturePlayerCardLayout();
+
+      const finishRemove = () => {
+        if (!players[index]) return;
+
+        const removedPlayer = sanitizePlayer(players[index]);
+        players.splice(index, 1);
+
+        pushDeletedPlayerUndoEntry({
+          type: "delete",
+          index,
+          players: [removedPlayer]
+        });
+
+        resetTeams();
+        renderPlayers();
+        renderPlayerDBCount();
+        saveData();
+
+        animatePlayerCardsFromSnapshot(layoutSnapshot);
+      };
+
+      if (!card) {
+        finishRemove();
+        return;
+      }
+
+      card.classList.add("card-delete-out");
+
+      const trashButton = card.querySelector(".card-trash-btn");
+      if (trashButton) trashButton.disabled = true;
+
+      setTimeout(finishRemove, 210);
     }
+
     function clearAll(shouldConfirm = true) {
       if (shouldConfirm && players.length > 0 && !confirm("현재 등록 명단을 초기화할까요?")) return;
-      if (players.length > 0) {
-        pushDeletedPlayerUndoEntry({ type: "clear", index: 0, players: players.map(player => sanitizePlayer(player)) });
+
+      if (players.length === 0) {
+        renderPlayers();
+        renderPlayerDBCount();
+        saveData();
+        return;
       }
-      players.length = 0; blueTeam = []; redTeam = []; arenaTeams = [];
-      document.getElementById("teamResult").innerHTML = `<div class="empty-message">등록된 선수가 있으면 내전표 탭에서 바로 팀을 확인할 수 있습니다.</div>`;
-      renderPlayers(); renderPlayerDBCount(); saveData();
+
+      const cards = Array.from(document.querySelectorAll(".player-card"));
+
+      const finishClear = () => {
+        if (players.length > 0) {
+          pushDeletedPlayerUndoEntry({
+            type: "clear",
+            index: 0,
+            players: players.map(player => sanitizePlayer(player))
+          });
+        }
+
+        players.length = 0;
+        blueTeam = [];
+        redTeam = [];
+        arenaTeams = [];
+
+        document.getElementById("teamResult").innerHTML =
+          `<div class="empty-message">등록된 선수가 있으면 내전표 탭에서 바로 팀을 확인할 수 있습니다.</div>`;
+
+        renderPlayers();
+        renderPlayerDBCount();
+        saveData();
+      };
+
+      if (cards.length === 0) {
+        finishClear();
+        return;
+      }
+
+      cards.forEach((card, cardIndex) => {
+        card.style.setProperty("--clear-delay", `${Math.min(cardIndex * 38, 320)}ms`);
+        card.classList.add("card-clear-out");
+
+        const trashButton = card.querySelector(".card-trash-btn");
+        if (trashButton) trashButton.disabled = true;
+      });
+
+      setTimeout(finishClear, 700);
     }
     function resetTeams() { blueTeam = []; redTeam = []; arenaTeams = []; document.getElementById("teamResult").innerHTML = `<div class="empty-message">등록된 선수가 있으면 내전표 탭에서 바로 팀을 확인할 수 있습니다.</div>`; }
     function averageScore(team) { return team.length ? team.reduce((sum, player) => sum + player.score, 0) / team.length : 0; }
@@ -3432,6 +3819,10 @@ const globalMissions = [
       players.forEach(player => {
         player.score = getModeScore(player);
       });
+    }
+
+    function getMatchEligiblePlayers() {
+      return players.filter(player => !player.isDummy);
     }
 
     
@@ -3538,7 +3929,7 @@ const globalMissions = [
     }
 
     async function shuffleMatchTeams() {
-      if (players.length === 0) {
+      if (getMatchEligiblePlayers().length === 0) {
         alert("셔플할 선수가 없습니다.");
         return;
       }
@@ -3566,7 +3957,8 @@ function makeTeams() {
       redTeam = [];
       arenaTeams = [];
       refreshModeScores();
-      players.forEach((player, index) => {
+      const eligiblePlayers = getMatchEligiblePlayers();
+      eligiblePlayers.forEach((player, index) => {
         if (index % 2 === 0) blueTeam.push(player);
         else redTeam.push(player);
       });
@@ -3582,53 +3974,241 @@ function makeTeams() {
       makeOptimalTwoTeams();
     }
 
+    const CLASSIC_LINES = ["탑", "정글", "미드", "원딜", "서폿"];
+    const LINE_IMPACT_WEIGHT = {
+      "미드": 1.2,
+      "정글": 1.15,
+      "원딜": 1.0,
+      "탑": 0.98,
+      "서폿": 0.72
+    };
+
+    function getLineKey(player) {
+      const line = String(player?.line || "").trim();
+      return CLASSIC_LINES.includes(line) ? line : "미정";
+    }
+
+    function countLines(team) {
+      const counts = {};
+      CLASSIC_LINES.forEach(line => counts[line] = 0);
+      counts["미정"] = 0;
+
+      team.forEach(player => {
+        const line = getLineKey(player);
+        counts[line] = (counts[line] || 0) + 1;
+      });
+
+      return counts;
+    }
+
+    function getTeamLineDuplicatePenalty(team) {
+      const counts = countLines(team);
+      const validLines = CLASSIC_LINES.filter(line => counts[line] > 0);
+      const duplicateCount = CLASSIC_LINES.reduce((sum, line) => sum + Math.max(0, counts[line] - 1), 0);
+      const unknownCount = counts["미정"] || 0;
+
+      const expectedUniqueLines = Math.min(team.length, CLASSIC_LINES.length);
+      const missingShapeCount = Math.max(0, expectedUniqueLines - validLines.length);
+
+      return duplicateCount * 10 + missingShapeCount * 6 + unknownCount * 12;
+    }
+
+    function getLineDistributionPenalty(teamA, teamB) {
+      const countA = countLines(teamA);
+      const countB = countLines(teamB);
+
+      return CLASSIC_LINES.reduce((sum, line) => {
+        return sum + Math.abs((countA[line] || 0) - (countB[line] || 0)) * 12;
+      }, 0) + Math.abs((countA["미정"] || 0) - (countB["미정"] || 0)) * 10;
+    }
+
+    function getLineMatchupPenalty(teamA, teamB) {
+      let penalty = 0;
+
+      CLASSIC_LINES.forEach(line => {
+        const weight = LINE_IMPACT_WEIGHT[line] || 1;
+        const aScores = teamA
+          .filter(player => getLineKey(player) === line)
+          .map(player => Number(player.score) || 0)
+          .sort((a, b) => b - a);
+        const bScores = teamB
+          .filter(player => getLineKey(player) === line)
+          .map(player => Number(player.score) || 0)
+          .sort((a, b) => b - a);
+
+        const pairCount = Math.min(aScores.length, bScores.length);
+
+        for (let i = 0; i < pairCount; i++) {
+          penalty += Math.abs(aScores[i] - bScores[i]) * weight;
+        }
+
+        const extraScores = aScores.length > bScores.length
+          ? aScores.slice(pairCount)
+          : bScores.slice(pairCount);
+
+        extraScores.forEach(score => {
+          penalty += Math.max(4, score * 0.26) * weight;
+        });
+      });
+
+      return penalty;
+    }
+
+    function getHighScoreClusterPenalty(teamA, teamB, allPlayers) {
+      const sorted = [...allPlayers].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+      const topCount = Math.min(4, Math.max(2, Math.ceil(sorted.length / 3)));
+      const topPlayers = sorted.slice(0, topCount);
+      const teamASet = new Set(teamA);
+
+      const topA = topPlayers.filter(player => teamASet.has(player)).length;
+      const topB = topPlayers.length - topA;
+
+      const maxA = Math.max(0, ...teamA.map(player => Number(player.score) || 0));
+      const maxB = Math.max(0, ...teamB.map(player => Number(player.score) || 0));
+
+      const topTwoA = [...teamA].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0)).slice(0, 2);
+      const topTwoB = [...teamB].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0)).slice(0, 2);
+      const topTwoDiff = Math.abs(sumScore(topTwoA) - sumScore(topTwoB));
+
+      return Math.abs(topA - topB) * 14 + Math.abs(maxA - maxB) * 0.45 + topTwoDiff * 0.25;
+    }
+
+    function evaluateTwoTeamBalance(teamA, teamB, allPlayers) {
+      const totalScore = sumScore(allPlayers);
+      const overallAverage = allPlayers.length ? totalScore / allPlayers.length : 0;
+
+      const expectedA = overallAverage * teamA.length;
+      const expectedB = overallAverage * teamB.length;
+      const actualA = sumScore(teamA);
+      const actualB = sumScore(teamB);
+
+      const expectedTotalPenalty = Math.abs(actualA - expectedA) + Math.abs(actualB - expectedB);
+      const averagePenalty = Math.abs(averageScore(teamA) - averageScore(teamB));
+      const lineDistributionPenalty = getLineDistributionPenalty(teamA, teamB);
+      const duplicatePenalty = getTeamLineDuplicatePenalty(teamA) + getTeamLineDuplicatePenalty(teamB);
+      const lineMatchupPenalty = getLineMatchupPenalty(teamA, teamB);
+      const highScoreClusterPenalty = getHighScoreClusterPenalty(teamA, teamB, allPlayers);
+
+      return (
+        expectedTotalPenalty * 2.8 +
+        averagePenalty * 2.0 +
+        lineDistributionPenalty +
+        duplicatePenalty +
+        lineMatchupPenalty * 0.9 +
+        highScoreClusterPenalty
+      );
+    }
+
+    function chooseBestTwoTeamsByPenalty(candidateTeams, allPlayers) {
+      let bestBlue = [];
+      let bestRed = [];
+      let bestScore = Infinity;
+      const nearBestCandidates = [];
+
+      candidateTeams.forEach(([candidateBlue, candidateRed]) => {
+        const score = evaluateTwoTeamBalance(candidateBlue, candidateRed, allPlayers);
+
+        if (score < bestScore - 0.0001) {
+          bestScore = score;
+          bestBlue = candidateBlue;
+          bestRed = candidateRed;
+          nearBestCandidates.length = 0;
+          nearBestCandidates.push({ blue: candidateBlue, red: candidateRed, score });
+        } else if (score <= bestScore + 0.75) {
+          nearBestCandidates.push({ blue: candidateBlue, red: candidateRed, score });
+        }
+      });
+
+      if (nearBestCandidates.length > 1) {
+        const selected = nearBestCandidates[Math.floor(Math.random() * nearBestCandidates.length)];
+        bestBlue = selected.blue;
+        bestRed = selected.red;
+      }
+
+      return { blue: bestBlue, red: bestRed, score: bestScore };
+    }
+
+    function makeGreedyTwoTeams(playersToSplit, targetBlueSize) {
+      const sorted = [...playersToSplit].sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+      const blue = [];
+      const red = [];
+
+      sorted.forEach(player => {
+        if (blue.length >= targetBlueSize) {
+          red.push(player);
+          return;
+        }
+
+        if (red.length >= playersToSplit.length - targetBlueSize) {
+          blue.push(player);
+          return;
+        }
+
+        const blueCandidate = [...blue, player];
+        const redCandidate = [...red, player];
+
+        const bluePenalty = evaluateTwoTeamBalance(blueCandidate, red, [...blueCandidate, ...red]);
+        const redPenalty = evaluateTwoTeamBalance(blue, redCandidate, [...blue, ...redCandidate]);
+
+        if (bluePenalty <= redPenalty) blue.push(player);
+        else red.push(player);
+      });
+
+      return [blue, red];
+    }
+
+    function makeRandomCandidateTeams(playersToSplit, targetBlueSize, trialCount = 6000) {
+      const candidates = [];
+      const [greedyBlue, greedyRed] = makeGreedyTwoTeams(playersToSplit, targetBlueSize);
+      candidates.push([greedyBlue, greedyRed]);
+
+      for (let i = 0; i < trialCount; i++) {
+        const shuffled = shuffleArrayCopy(playersToSplit);
+        const blue = shuffled.slice(0, targetBlueSize);
+        const red = shuffled.slice(targetBlueSize);
+        candidates.push([blue, red]);
+      }
+
+      return candidates;
+    }
+
     function makeOptimalTwoTeams() {
       blueTeam = [];
       redTeam = [];
       arenaTeams = [];
       refreshModeScores();
+      const eligiblePlayers = getMatchEligiblePlayers();
 
-      if (players.length === 0) {
+      if (eligiblePlayers.length === 0) {
         renderTeams();
         saveData();
         return;
       }
 
-      const targetBlueSize = Math.ceil(players.length / 2);
+      const targetBlueSize = Math.ceil(eligiblePlayers.length / 2);
+      const targetRedSize = eligiblePlayers.length - targetBlueSize;
 
-      if (players.length > 20) {
-        const sorted = [...players].sort((a, b) => getModeScore(b) - getModeScore(a));
-        sorted.forEach(player => {
-          if (blueTeam.length >= targetBlueSize) redTeam.push(player);
-          else if (redTeam.length >= players.length - targetBlueSize) blueTeam.push(player);
-          else if (sumScore(blueTeam) <= sumScore(redTeam)) blueTeam.push(player);
-          else redTeam.push(player);
-        });
+      if (eligiblePlayers.length > 22) {
+        const candidates = makeRandomCandidateTeams(eligiblePlayers, targetBlueSize, 9000);
+        const best = chooseBestTwoTeamsByPenalty(candidates, eligiblePlayers);
+        blueTeam = [...best.blue];
+        redTeam = [...best.red];
         renderTeams();
         saveData();
         return;
       }
 
-      const combinations = getCombinations(players, targetBlueSize);
-      let bestBlue = [];
-      let bestRed = [];
-      let bestScore = Infinity;
-
-      combinations.forEach(candidateBlue => {
+      const combinations = getCombinations(eligiblePlayers, targetBlueSize);
+      const candidates = combinations.map(candidateBlue => {
         const candidateSet = new Set(candidateBlue);
-        const candidateRed = players.filter(player => !candidateSet.has(player));
-        const avgDiff = Math.abs(averageScore(candidateBlue) - averageScore(candidateRed));
-        const sumDiff = Math.abs(sumScore(candidateBlue) - sumScore(candidateRed)) / 1000;
-        const score = avgDiff + sumDiff;
-        if (score < bestScore) {
-          bestScore = score;
-          bestBlue = candidateBlue;
-          bestRed = candidateRed;
-        }
-      });
+        const candidateRed = eligiblePlayers.filter(player => !candidateSet.has(player));
+        return [candidateBlue, candidateRed];
+      }).filter(([, candidateRed]) => candidateRed.length === targetRedSize);
 
-      blueTeam = [...bestBlue];
-      redTeam = [...bestRed];
+      const best = chooseBestTwoTeamsByPenalty(candidates, eligiblePlayers);
+
+      blueTeam = [...best.blue];
+      redTeam = [...best.red];
       renderTeams();
       saveData();
     }
@@ -3643,6 +4223,8 @@ function makeTeams() {
     }
 
     function renderTeams() {
+      blueTeam = blueTeam.filter(player => !player.isDummy);
+      redTeam = redTeam.filter(player => !player.isDummy);
       const result = document.getElementById("teamResult");
       const blueAvg = averageScore(blueTeam), redAvg = averageScore(redTeam), diff = Math.abs(blueAvg - redAvg);
       result.innerHTML = `
@@ -3718,8 +4300,9 @@ function makeTeams() {
     function makeArenaTeams() {
       arenaTeams = [];
       refreshModeScores();
-      for (let i = 0; i < players.length; i += 3) {
-        arenaTeams.push(players.slice(i, i + 3));
+      const eligiblePlayers = getMatchEligiblePlayers();
+      for (let i = 0; i < eligiblePlayers.length; i += 3) {
+        arenaTeams.push(eligiblePlayers.slice(i, i + 3));
       }
       renderArenaTeams(arenaTeams);
       saveData();
@@ -3728,18 +4311,19 @@ function makeTeams() {
     function makeOptimalArenaTeams() {
       arenaTeams = [];
       refreshModeScores();
+      const eligiblePlayers = getMatchEligiblePlayers();
 
-      if (players.length === 0) {
+      if (eligiblePlayers.length === 0) {
         renderArenaTeams(arenaTeams);
         saveData();
         return;
       }
 
-      const teamCount = Math.ceil(players.length / 3);
-      const baseSize = Math.floor(players.length / teamCount);
-      const remainder = players.length % teamCount;
+      const teamCount = Math.ceil(eligiblePlayers.length / 3);
+      const baseSize = Math.floor(eligiblePlayers.length / teamCount);
+      const remainder = eligiblePlayers.length % teamCount;
       const capacities = Array.from({ length: teamCount }, (_, index) => baseSize + (index < remainder ? 1 : 0));
-      const sorted = [...players].sort((a, b) => getModeScore(b) - getModeScore(a));
+      const sorted = [...eligiblePlayers].sort((a, b) => getModeScore(b) - getModeScore(a));
       const teams = Array.from({ length: teamCount }, () => []);
 
       sorted.forEach(player => {
@@ -3765,7 +4349,7 @@ function makeTeams() {
 
     function renderArenaTeams(teams) {
       const result = document.getElementById("teamResult");
-      const safeTeams = Array.isArray(teams) ? teams : [];
+      const safeTeams = Array.isArray(teams) ? teams.map(team => team.filter(player => !player.isDummy)).filter(team => team.length > 0) : [];
       if (safeTeams.length === 0) {
         result.innerHTML = `<div class="match-container"><div class="empty-message">아직 등록된 아레나 참가자가 없습니다. 선수를 추가하면 이곳에 팀이 표시됩니다.</div></div>`;
         return;
@@ -5005,6 +5589,87 @@ function makeTeams() {
       });
     }
 
+
+    function closeCardChampionSearches() {
+      document.querySelectorAll(".card-champion-search-box.open").forEach(box => {
+        box.classList.remove("open");
+        const input = box.querySelector(".card-champion-input");
+        if (input && !input.value.trim()) input.placeholder = "챔피언 검색";
+        const card = box.closest(".player-card");
+        if (card) card.classList.remove("card-search-open");
+      });
+    }
+
+    function openCardChampionSearch(event, index, input) {
+      if (event) event.stopPropagation();
+      const box = input.closest(".card-champion-search-box");
+      if (!box) return;
+      document.querySelectorAll(".card-champion-search-box.open").forEach(openBox => {
+        if (openBox !== box) {
+          openBox.classList.remove("open");
+          const openInput = openBox.querySelector(".card-champion-input");
+          if (openInput && !openInput.value.trim()) openInput.placeholder = "챔피언 검색";
+          const openCard = openBox.closest(".player-card");
+          if (openCard) openCard.classList.remove("card-search-open");
+        }
+      });
+      input.placeholder = "";
+      const card = box.closest(".player-card");
+      if (card) card.classList.add("card-search-open");
+      box.classList.add("open");
+      renderCardChampionSearch(index, input.value);
+    }
+
+    function renderCardChampionSearch(index, keyword = "") {
+      const card = document.querySelector(`.player-card[data-player-index="${index}"]`);
+      if (!card) return;
+      const box = card.querySelector(".card-champion-search-box");
+      const dropdown = card.querySelector(".card-champion-dropdown");
+      if (!box || !dropdown) return;
+
+      const champions = getFilteredChampionsV2(keyword);
+      dropdown.innerHTML = "";
+
+      if (champions.length === 0) {
+        dropdown.innerHTML = `<div class="no-result">검색 결과 없음</div>`;
+        box.classList.add("open");
+        return;
+      }
+
+      champions.forEach(champion => {
+        const option = document.createElement("div");
+        option.className = "card-champion-option";
+        option.innerHTML = `
+          <img src="${getChampionImage(champion)}" alt="">
+          <span>${escapeHtml(champion)}</span>
+        `;
+        option.addEventListener("mousedown", event => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeCardChampionSearches();
+          updatePlayerCardField(index, "champion", champion);
+        });
+        dropdown.appendChild(option);
+      });
+      box.classList.add("open");
+    }
+
+    function handleCardChampionSearchKey(event, index, input) {
+      if (event.key === "Escape") {
+        closeCardChampionSearches();
+        input.blur();
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const firstChampion = getFilteredChampionsV2(input.value)[0];
+        if (firstChampion) {
+          closeCardChampionSearches();
+          updatePlayerCardField(index, "champion", firstChampion);
+        }
+      }
+    }
+
     document.addEventListener("mousedown", event => {
       if (!event.target.closest(".champion-search-box")) {
         const dropdown = document.getElementById("championDropdown");
@@ -5013,6 +5678,9 @@ function makeTeams() {
       if (!event.target.closest(".nickname-search-box")) {
         const dropdown = document.getElementById("nicknameDropdown");
         if (dropdown) closeSearchDropdownV2(dropdown);
+      }
+      if (!event.target.closest(".card-champion-search-box")) {
+        closeCardChampionSearches();
       }
     });
 
