@@ -2819,10 +2819,27 @@
     
     let currentDraftStep = 0;
     let draftPickDragInfo = null;
-    let draftSelections = {
-      blue: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] },
-      red: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] }
-    };
+
+    function createEmptyDraftSelections() {
+      return {
+        blue: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] },
+        red: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] }
+      };
+    }
+
+    let draftSelections = createEmptyDraftSelections();
+
+    function isDraftTabActive() {
+      const section = document.getElementById("tab-banpick");
+      return !!section && section.classList.contains("active");
+    }
+
+    function resetDraftState(shouldRender = false) {
+      stopDraftTimer(false);
+      currentDraftStep = 0;
+      draftSelections = createEmptyDraftSelections();
+      if (shouldRender && isDraftTabActive()) initDraftCenterGrid();
+    }
 
 const championList = [
       "가렌", "갈리오", "갱플랭크", "그라가스", "그레이브즈", "그웬", "나르", "나미", "나서스", "나피리",
@@ -3188,7 +3205,7 @@ const globalMissions = [
       if (isLoading) return;
       const activeSection = document.querySelector(".section.active");
       const activeTab = activeSection ? activeSection.id : "tab-player-register";
-      const data = { players, blueTeam, redTeam, arenaTeams, activeTab, currentMode, currentDraftStep, draftSelections };
+      const data = { players, blueTeam, redTeam, arenaTeams, activeTab, currentMode };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
     }
 
@@ -3203,10 +3220,7 @@ const globalMissions = [
         blueTeam = Array.isArray(data.blueTeam) ? data.blueTeam.map(sanitizePlayer) : [];
         redTeam = Array.isArray(data.redTeam) ? data.redTeam.map(sanitizePlayer) : [];
         arenaTeams = Array.isArray(data.arenaTeams) ? data.arenaTeams.map(team => Array.isArray(team) ? team.map(sanitizePlayer) : []) : [];
-        if (typeof data.currentDraftStep === "number") currentDraftStep = data.currentDraftStep;
-        if (data.draftSelections && data.draftSelections.blue && data.draftSelections.red) {
-          draftSelections = data.draftSelections;
-        }
+        resetDraftState(false);
         renderAll();
         deletedPlayerUndoStack.length = 0;
         updateUndoButtonState();
@@ -3291,6 +3305,7 @@ const globalMissions = [
       if (activeButton) activeButton.classList.add("active");
       if (tabId === "tab-match-team") renderCurrentMatchTable();
       if (tabId === "tab-banpick") initDraftCenterGrid();
+      else stopDraftTimer(false);
       if (shouldSave) saveData();
     }
 
@@ -4500,6 +4515,10 @@ function makeTeams() {
     }
 
     function handleDraftTimeout() {
+      if (!isDraftTabActive()) {
+        stopDraftTimer(false);
+        return;
+      }
       if (currentDraftStep >= draftSequence.length) return;
 
       const step = draftSequence[currentDraftStep];
@@ -4515,6 +4534,11 @@ function makeTeams() {
 
     function initDraftCenterGrid() {
       const grid = document.getElementById("draftChampGrid");
+      if (!grid) return;
+      if (!isDraftTabActive()) {
+        stopDraftTimer(false);
+        return;
+      }
       grid.innerHTML = "";
 
       championList.sort().forEach(champ => {
@@ -4655,6 +4679,8 @@ function makeTeams() {
 
     function restartDraftTimer() {
       stopDraftTimer(false);
+
+      if (!isDraftTabActive()) return;
 
       if (currentDraftStep >= draftSequence.length) {
         stopDraftTimer(true);
@@ -5184,13 +5210,8 @@ function makeTeams() {
 
     function resetDraftInfo() {
       if (!confirm("현재 진행 중인 드래프트 밴픽 상황을 초기화하시겠습니까?")) return;
-      currentDraftStep = 0;
-      draftSelections = {
-        blue: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] },
-        red: { bans: [null, null, null, null, null], picks: [null, null, null, null, null] }
-      };
+      resetDraftState(true);
       saveData();
-      initDraftCenterGrid();
     }
 
     function refreshDraftUIHighlights() {
@@ -5256,7 +5277,7 @@ function makeTeams() {
         document.getElementById("draftPhaseText").textContent = nextInfo.label;
         const statusText = document.getElementById("draftStatusText");
         statusText.classList.remove("complete");
-        statusText.textContent = nextInfo.type === "ban" ? `${nextInfo.team.toUpperCase()} SIDE BAN · 30초 후 자동 노밴` : `${nextInfo.team.toUpperCase()} SIDE PICK · 30초 후 자동 랜덤픽`;
+        statusText.textContent = nextInfo.type === "ban" ? `${nextInfo.team.toUpperCase()} SIDE BAN` : `${nextInfo.team.toUpperCase()} SIDE PICK`;
         
         const targetElementId = `${nextInfo.team}-${nextInfo.type}-${nextInfo.index}`;
         const targetEl = document.getElementById(targetElementId);
