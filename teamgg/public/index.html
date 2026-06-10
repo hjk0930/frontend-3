@@ -297,6 +297,37 @@
     .team-player.dragging { opacity: 0.35; transform: scale(0.98); }
     .team-player.before::before, .team-player.after::after { content: ""; position: absolute; left: 8px; right: 8px; height: 4px; background: var(--accent-strong); border-radius: 999px; box-shadow: 0 0 14px var(--glow); z-index: 5; }
     .team-player.before::before { top: -2px; } .team-player.after::after { bottom: -2px; }
+
+    .arena-mem {
+      position: relative;
+      cursor: grab;
+      transition: background 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+    }
+    .arena-mem.dragging {
+      opacity: 0.35;
+      transform: scale(0.98);
+    }
+    .arena-mem.before::before,
+    .arena-mem.after::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      height: 4px;
+      background: var(--accent-strong);
+      border-radius: 999px;
+      box-shadow: 0 0 14px var(--glow);
+      z-index: 5;
+    }
+    .arena-mem.before::before { top: -3px; }
+    .arena-mem.after::after { bottom: -3px; }
+    .arena-team-box.arena-drop-over {
+      outline: 2px dashed var(--accent);
+      outline-offset: -4px;
+      background: linear-gradient(180deg, var(--card-top), var(--card-bottom));
+      box-shadow: 0 0 18px var(--glow);
+    }
+
     .team-player .champ-name { color: var(--accent-strong); }
     .team-player .score-value { color: var(--text-muted); }
     .team-summary { text-align: center; margin-top: 18px; color: var(--text-main); font-size: 16px; font-weight: bold; line-height: 1.7; }
@@ -2666,7 +2697,8 @@
             <div id="draftStatusText" class="draft-status-text">챔피언을 선택하면 순서대로 등록됩니다.</div>
           </div>
           <div class="draft-controls-row">
-            <button class="sub-button" style="background:#2c6b4e;" onclick="undoDraftTurn()">이전 차례로</button>
+            <button id="draftStartButton" class="sub-button" style="background:#2c6b4e;" onclick="startDraftInfo()">밴픽 시작</button>
+            <button class="sub-button" onclick="undoDraftTurn()">이전 차례로</button>
             <button id="draftNoBanButton" class="sub-button" onclick="noBanDraftTurn()">노밴</button>
             <button id="draftSaveImageButton" class="sub-button draft-save-button" onclick="saveDraftAsImage()" disabled>이미지 저장</button>
             <button class="sub-button" style="background:#8c2336;" onclick="resetDraftInfo()">초기화</button>
@@ -2828,6 +2860,7 @@
     }
 
     let draftSelections = createEmptyDraftSelections();
+    let draftStarted = false;
 
     function isDraftTabActive() {
       const section = document.getElementById("tab-banpick");
@@ -2836,6 +2869,7 @@
 
     function resetDraftState(shouldRender = false) {
       stopDraftTimer(false);
+      draftStarted = false;
       currentDraftStep = 0;
       draftSelections = createEmptyDraftSelections();
       if (shouldRender && isDraftTabActive()) initDraftCenterGrid();
@@ -3048,6 +3082,16 @@ const globalMissions = [
       if (!scoreTable[tier]) return 0;
       return scoreTable[tier][line] || 0;
     }
+    function inferPlayerMode(player) {
+      const explicitMode = String(player?.mode || "").trim();
+      if (["classic", "aram", "arena", "all"].includes(explicitMode)) return explicitMode;
+
+      const line = String(player?.line || "").trim();
+      if (line === "칼바람") return "aram";
+      if (line === "아레나") return "arena";
+      return "classic";
+    }
+
     function sanitizePlayer(player) {
       return {
         nickname: String(player?.nickname || "").trim(),
@@ -3055,12 +3099,49 @@ const globalMissions = [
         line: String(player?.line || "").trim(),
         champion: String(player?.champion || "").trim(),
         score: Number(player?.score) || 0,
-        isDummy: Boolean(player?.isDummy)
+        isDummy: Boolean(player?.isDummy),
+        mode: inferPlayerMode(player),
+        source: String(player?.source || "").trim()
       };
     }
 
     function getTierNames() { return Object.keys(scoreTable); }
     function getClassicLineNames() { return ["탑", "정글", "미드", "원딜", "서폿"]; }
+    function getFixedLineByMode(mode = currentMode) {
+      if (mode === "aram") return "칼바람";
+      if (mode === "arena") return "아레나";
+      return "";
+    }
+    function isFixedModeLine(line) {
+      return line === "칼바람" || line === "아레나";
+    }
+
+    function isAramOnlyPlayer(player) {
+      const mode = String(player?.mode || "").trim();
+      const line = String(player?.line || "").trim();
+      return mode === "aram" || line === "칼바람";
+    }
+
+    function isArenaOnlyPlayer(player) {
+      const mode = String(player?.mode || "").trim();
+      const line = String(player?.line || "").trim();
+      return mode === "arena" || line === "아레나";
+    }
+
+    function isUniversalSavedPlayer(player) {
+      return String(player?.mode || "").trim() === "all" || String(player?.source || "").trim() === "saved-db";
+    }
+
+    function belongsToCurrentMode(player) {
+      if (!player) return false;
+      if (isUniversalSavedPlayer(player)) return true;
+
+      // 칼바람/아레나 전용으로 만든 선수만 다른 모드에서 막는다.
+      // 협곡 정보(라인/챔피언)가 있는 기존 선수는 칼바람/아레나에서도 재사용 가능하다.
+      if (isAramOnlyPlayer(player)) return currentMode === "aram";
+      if (isArenaOnlyPlayer(player)) return currentMode === "arena";
+      return true;
+    }
     function escapeHtml(value) {
       return String(value ?? "")
         .replaceAll("&", "&amp;")
@@ -3180,19 +3261,29 @@ const globalMissions = [
     }
 
     function undoPlayerListChange() {
-      const lastDeleted = deletedPlayerUndoStack.pop();
-      if (!lastDeleted) return;
+      const lastEntry = deletedPlayerUndoStack.pop();
+      if (!lastEntry) return;
 
-      const restorePlayers = Array.isArray(lastDeleted.players) ? lastDeleted.players : [lastDeleted.player];
-      const insertIndex = Math.max(0, Math.min(players.length, Number.isInteger(lastDeleted.index) ? lastDeleted.index : players.length));
+      if (lastEntry.type === "add-temporary") {
+        const addedNames = new Set((lastEntry.players || []).map(player => normalizeSearchText(player.nickname)));
+        for (let i = players.length - 1; i >= 0; i -= 1) {
+          const player = players[i];
+          if (player && player.isDummy && addedNames.has(normalizeSearchText(player.nickname))) {
+            players.splice(i, 1);
+          }
+        }
+      } else {
+        const restorePlayers = Array.isArray(lastEntry.players) ? lastEntry.players : [lastEntry.player];
+        const insertIndex = Math.max(0, Math.min(players.length, Number.isInteger(lastEntry.index) ? lastEntry.index : players.length));
 
-      restorePlayers
-        .filter(Boolean)
-        .map(player => sanitizePlayer(player))
-        .forEach((player, offset) => {
-          const alreadyExists = players.some(existing => normalizeSearchText(existing.nickname) === normalizeSearchText(player.nickname));
-          if (!alreadyExists) players.splice(insertIndex + offset, 0, player);
-        });
+        restorePlayers
+          .filter(Boolean)
+          .map(player => sanitizePlayer(player))
+          .forEach((player, offset) => {
+            const alreadyExists = players.some(existing => normalizeSearchText(existing.nickname) === normalizeSearchText(player.nickname));
+            if (!alreadyExists) players.splice(insertIndex + offset, 0, player);
+          });
+      }
 
       resetTeams();
       renderPlayers();
@@ -3224,7 +3315,8 @@ const globalMissions = [
         renderAll();
         deletedPlayerUndoStack.length = 0;
         updateUndoButtonState();
-        const savedTab = data.activeTab === "tab-saved-player" ? "tab-player-register" : (data.activeTab || "tab-player-register");
+        const rawSavedTab = data.activeTab || "tab-player-register";
+        const savedTab = (rawSavedTab === "tab-saved-player" || rawSavedTab === "tab-banpick") ? "tab-player-register" : rawSavedTab;
         switchTab(savedTab, false);
       } catch (error) {
         console.error(error);
@@ -3250,6 +3342,8 @@ const globalMissions = [
 
       currentMode = mode;
       applyModeUI();
+      refreshModeScores();
+      resetTeams();
       renderPlayers();
       const activeSection = document.querySelector(".section.active");
       if (activeSection && activeSection.id === "tab-match-team") renderCurrentMatchTable();
@@ -3348,11 +3442,18 @@ const globalMissions = [
 
     function addTemporaryPlayers(amount) {
       const count = Math.max(1, Number(amount) || 1);
+      const addedPlayers = [];
       for (let i = 0; i < count; i += 1) {
         const nickname = getNextTemporaryPlayerName();
         const line = currentMode === "aram" ? "칼바람" : (currentMode === "arena" ? "아레나" : "");
-        players.push({ nickname, tier: "", line, champion: "", score: 0, isDummy: true });
+        const temporaryPlayer = { nickname, tier: "", line, champion: "", score: 0, isDummy: true, mode: currentMode, source: "temporary" };
+        players.push(temporaryPlayer);
+        addedPlayers.push(sanitizePlayer(temporaryPlayer));
       }
+      pushDeletedPlayerUndoEntry({
+        type: "add-temporary",
+        players: addedPlayers
+      });
       resetTeams();
       renderPlayers();
       renderPlayerDBCount();
@@ -3371,10 +3472,18 @@ const globalMissions = [
       return Boolean(readyNickname && readyTier && readyLine && readyChampion);
     }
 
-    function addPlayer(nickname, tier, line, champion = "", shouldRender = true, allowIncompleteLine = false) {
+    function addPlayer(nickname, tier, line, champion = "", shouldRender = true, allowIncompleteLine = false, source = "manual") {
       if (!nickname || !tier || (!line && !allowIncompleteLine)) {
         alert("필수 항목을 입력해주세요.");
         return false;
+      }
+
+      if (currentMode === "aram") {
+        line = "칼바람";
+        champion = "";
+      }
+      if (currentMode === "arena") {
+        line = "아레나";
       }
 
       let normalizedChampion = String(champion || "").trim();
@@ -3410,7 +3519,9 @@ const globalMissions = [
         line,
         champion: normalizedChampion,
         score,
-        isDummy: false
+        isDummy: false,
+        mode: source === "saved-db" ? "all" : currentMode,
+        source
       };
 
       players.push(playerData);
@@ -3433,7 +3544,9 @@ const globalMissions = [
           tier: savedPlayer.tier,
           line: "칼바람",
           champion: "",
-          score: calculateScore(savedPlayer.tier, "칼바람")
+          score: calculateScore(savedPlayer.tier, "칼바람"),
+          mode: "all",
+          source: "saved-db"
         };
       }
 
@@ -3443,11 +3556,15 @@ const globalMissions = [
           tier: savedPlayer.tier,
           line: "아레나",
           champion: savedPlayer.champion || "",
-          score: calculateScore(savedPlayer.tier, "아레나")
+          score: calculateScore(savedPlayer.tier, "아레나"),
+          mode: "all",
+          source: "saved-db"
         };
       }
 
       const player = sanitizePlayer(savedPlayer);
+      player.mode = "all";
+      player.source = "saved-db";
       if (!getClassicLineNames().includes(player.line)) {
         player.line = "";
         player.score = 0;
@@ -3465,7 +3582,7 @@ const globalMissions = [
       const savedPlayer = selectedSavedPlayer || playerDB.find(player => normalizeSearchText(player.nickname) === keyword) || playerDB.find(player => normalizeSearchText(player.nickname).includes(keyword));
       if (!savedPlayer) { alert("저장된 선수 DB에서 해당 닉네임을 찾지 못했습니다."); return; }
       const modePlayer = makeModePlayerFromSaved(savedPlayer);
-      const ok = addPlayer(modePlayer.nickname, modePlayer.tier, modePlayer.line, modePlayer.champion, true, currentMode === "classic" && !modePlayer.line);
+      const ok = addPlayer(modePlayer.nickname, modePlayer.tier, modePlayer.line, modePlayer.champion, true, currentMode === "classic" && !modePlayer.line, "saved-db");
       if (!ok) return;
       input.value = "";
       dropdown.innerHTML = "";
@@ -3488,6 +3605,8 @@ const globalMissions = [
       const existingPlayer = playerDB.find(savedPlayer => normalizeSearchText(savedPlayer.nickname) === targetNickname);
       const savedData = sanitizePlayer(player);
       savedData.isDummy = false;
+      savedData.mode = "all";
+      savedData.source = "saved-db";
       savedData.score = calculateSavedDBScore(savedData);
       if (existingPlayer) {
         existingPlayer.tier = savedData.tier;
@@ -3503,6 +3622,7 @@ const globalMissions = [
       if (!isPlayerReadyForDB(player)) return;
       const edited = sanitizePlayer(player);
       edited.isDummy = false;
+      edited.mode = currentMode;
       const targetNickname = normalizeSearchText(edited.nickname);
       if (!targetNickname) return;
 
@@ -3529,6 +3649,14 @@ const globalMissions = [
         mergedPlayer.champion = edited.champion;
       }
 
+      if (currentMode !== "classic" && !isUniversalSavedPlayer(mergedPlayer)) {
+        mergedPlayer.mode = currentMode;
+        mergedPlayer.line = getFixedLineByMode();
+      } else if (isUniversalSavedPlayer(mergedPlayer)) {
+        mergedPlayer.mode = "all";
+        mergedPlayer.source = "saved-db";
+      }
+
       mergedPlayer.score = calculateSavedDBScore(mergedPlayer);
       upsertPlayerDB(mergedPlayer);
       renderPlayerDBCount();
@@ -3540,6 +3668,7 @@ const globalMissions = [
     }
 
     function renderPlayers() {
+      refreshModeScores();
       const playerList = document.getElementById("playerList");
       const count = document.getElementById("count");
       const tabCount = document.getElementById("tabCount");
@@ -3568,11 +3697,13 @@ const globalMissions = [
           `<option value="${escapeHtml(tierName)}" ${player.tier === tierName ? "selected" : ""}>${escapeHtml(tierName)}</option>`
         ).join("");
 
+        const modeFixedLine = currentMode === "aram" ? "칼바람" : "아레나";
+        const classicDisplayLine = getClassicLineNames().includes(player.line) ? player.line : "";
         const lineOptions = currentMode === "classic"
-          ? `<option value="" ${player.line ? "" : "selected"}>라인 선택</option>` + getClassicLineNames().map(lineName =>
-              `<option value="${escapeHtml(lineName)}" ${player.line === lineName ? "selected" : ""}>${escapeHtml(lineName)}</option>`
+          ? `<option value="" ${classicDisplayLine ? "" : "selected"}>라인 선택</option>` + getClassicLineNames().map(lineName =>
+              `<option value="${escapeHtml(lineName)}" ${classicDisplayLine === lineName ? "selected" : ""}>${escapeHtml(lineName)}</option>`
             ).join("")
-          : `<option value="${escapeHtml(player.line || (currentMode === "aram" ? "칼바람" : "아레나"))}" selected>${escapeHtml(player.line || (currentMode === "aram" ? "칼바람" : "아레나"))}</option>`;
+          : `<option value="${escapeHtml(modeFixedLine)}" selected>${escapeHtml(modeFixedLine)}</option>`;
 
         const championEdit = showChampion
           ? `<div class="card-champion-search-box" onclick="event.stopPropagation();">
@@ -3591,7 +3722,7 @@ const globalMissions = [
             <select class="card-select line" title="라인 수정" ${currentMode === "classic" ? "" : "disabled"} onchange="updatePlayerCardField(${index}, 'line', this.value)">${lineOptions}</select>
             ${championEdit}
           </div>
-          <div class="score">밸런스 점수: <strong>${player.score}점</strong></div>`;
+          <div class="score">밸런스 점수: <strong>${getModeScore(player)}점</strong></div>`;
         playerList.appendChild(card);
       });
     }
@@ -3623,8 +3754,14 @@ const globalMissions = [
 
       if (field === "line") {
         if (currentMode === "classic" && nextValue && !getClassicLineNames().includes(nextValue)) return;
-        player.line = nextValue;
+        player.line = currentMode === "classic" ? nextValue : getFixedLineByMode();
       }
+
+      const shouldStayReusable = currentMode !== "classic" && !isAramOnlyPlayer(player) && !isArenaOnlyPlayer(player);
+      if (currentMode !== "classic" && !shouldStayReusable) {
+        player.line = getFixedLineByMode();
+      }
+      player.mode = shouldStayReusable ? (player.mode || "classic") : currentMode;
 
       if (field === "champion") {
         if (!nextValue) {
@@ -3639,9 +3776,6 @@ const globalMissions = [
           player.champion = normalizedChampion;
         }
       }
-
-      if (currentMode === "aram") player.line = "칼바람";
-      if (currentMode === "arena") player.line = "아레나";
 
       player.score = getModeScore(player);
 
@@ -3832,12 +3966,36 @@ const globalMissions = [
 
     function refreshModeScores() {
       players.forEach(player => {
-        player.score = getModeScore(player);
+        player.mode = inferPlayerMode(player);
+        player.score = belongsToCurrentMode(player) ? getModeScore(player) : Number(player.score) || 0;
       });
     }
 
+    function isPlayerEligibleForCurrentMode(player) {
+      if (!player || player.isDummy) return false;
+      if (!belongsToCurrentMode(player)) return false;
+      if (!getTierNames().includes(String(player.tier || "").trim())) return false;
+
+      if (currentMode === "classic") {
+        const line = String(player.line || "").trim();
+        const champion = normalizeChampion(String(player.champion || "").trim());
+        return getClassicLineNames().includes(line) && championList.includes(champion) && calculateScore(player.tier, line) > 0;
+      }
+
+      if (currentMode === "arena") {
+        const champion = normalizeChampion(String(player.champion || "").trim());
+        return championList.includes(champion) && calculateScore(player.tier, "아레나") > 0;
+      }
+
+      if (currentMode === "aram") {
+        return calculateScore(player.tier, "칼바람") > 0;
+      }
+
+      return false;
+    }
+
     function getMatchEligiblePlayers() {
-      return players.filter(player => !player.isDummy);
+      return players.filter(isPlayerEligibleForCurrentMode);
     }
 
     
@@ -3863,7 +4021,8 @@ const globalMissions = [
     }
 
     function makeRandomTwoTeamsPreview() {
-      const shuffled = shuffleArrayCopy(players);
+      refreshModeScores();
+      const shuffled = shuffleArrayCopy(getMatchEligiblePlayers());
       const blueSize = Math.ceil(shuffled.length / 2);
       blueTeam = shuffled.slice(0, blueSize);
       redTeam = shuffled.slice(blueSize);
@@ -3872,7 +4031,8 @@ const globalMissions = [
     }
 
     function makeRandomArenaTeamsPreview() {
-      const shuffled = shuffleArrayCopy(players);
+      refreshModeScores();
+      const shuffled = shuffleArrayCopy(getMatchEligiblePlayers());
       arenaTeams = [];
       for (let i = 0; i < shuffled.length; i += 3) {
         arenaTeams.push(shuffled.slice(i, i + 3));
@@ -4238,9 +4398,15 @@ function makeTeams() {
     }
 
     function renderTeams() {
-      blueTeam = blueTeam.filter(player => !player.isDummy);
-      redTeam = redTeam.filter(player => !player.isDummy);
+      blueTeam = blueTeam.filter(isPlayerEligibleForCurrentMode);
+      redTeam = redTeam.filter(isPlayerEligibleForCurrentMode);
       const result = document.getElementById("teamResult");
+
+      if (blueTeam.length === 0 && redTeam.length === 0) {
+        result.innerHTML = `<div class="match-container"><div class="empty-message">현재 모드에서 내전표에 넣을 수 있는 선수가 없습니다.</div></div>`;
+        return;
+      }
+
       const blueAvg = averageScore(blueTeam), redAvg = averageScore(redTeam), diff = Math.abs(blueAvg - redAvg);
       result.innerHTML = `
         <div class="match-container">
@@ -4270,7 +4436,7 @@ function makeTeams() {
           ? `<div class="team-pick-slot"><img src="${getChampionImage(player.champion)}" onerror="this.style.display='none'; this.parentElement.textContent='?';" class="team-champion-img" alt="${escapeHtml(player.champion || '')}"></div>`
           : "";
         const championCell = showChampion ? `<span class="champ-name" title="${escapeHtml(player.champion || '-')}">${escapeHtml(player.champion || "-")}</span>` : "";
-        const lineCell = currentMode === "classic" ? renderLineEditSelect(teamKey, index, player.line) : escapeHtml(player.line || "-");
+        const lineCell = currentMode === "classic" ? renderLineEditSelect(teamKey, index, player.line) : escapeHtml(currentMode === "aram" ? "칼바람" : "아레나");
         return `<div class="team-player" draggable="true" data-team="${teamKey}" data-index="${index}">${championImage}<span class="name" title="${escapeHtml(player.nickname)}">${escapeHtml(player.nickname)}</span><span>${renderTierEditSelect(teamKey, index, player.tier)}</span><span>${lineCell}</span>${championCell}<span class="score-value">${player.score}</span></div>`;
       }).join("");
       return `<div class="team ${teamKey}"><h3>${title}</h3><div class="team-summary">평균: ${averageScore(team).toFixed(1)}점 / 총합: ${sumScore(team)}점</div><div class="team-table"><div class="team-table-inner">${header}<div class="team-zone" data-zone="${teamKey}">${rows}</div></div></div></div>`;
@@ -4364,12 +4530,16 @@ function makeTeams() {
 
     function renderArenaTeams(teams) {
       const result = document.getElementById("teamResult");
-      const safeTeams = Array.isArray(teams) ? teams.map(team => team.filter(player => !player.isDummy)).filter(team => team.length > 0) : [];
-      if (safeTeams.length === 0) {
+      const safeTeams = Array.isArray(teams) ? teams.map(team => Array.isArray(team) ? team.filter(isPlayerEligibleForCurrentMode) : []) : [];
+      const totalPlayers = safeTeams.reduce((sum, team) => sum + team.length, 0);
+
+      if (totalPlayers === 0) {
         result.innerHTML = `<div class="match-container"><div class="empty-message">아직 등록된 아레나 참가자가 없습니다. 선수를 추가하면 이곳에 팀이 표시됩니다.</div></div>`;
         return;
       }
-      const averages = safeTeams.map(team => averageScore(team));
+
+      arenaTeams = safeTeams;
+      const averages = safeTeams.filter(team => team.length > 0).map(team => averageScore(team));
       const diff = averages.length ? Math.max(...averages) - Math.min(...averages) : 0;
       result.innerHTML = `
         <div class="match-container">
@@ -4378,10 +4548,10 @@ function makeTeams() {
           </div>
           <div class="arena-grid-6">
             ${safeTeams.map((team, teamIndex) => `
-              <div class="arena-team-box">
+              <div class="arena-team-box" data-arena-zone="${teamIndex}">
                 <h3>ARENA TEAM ${teamIndex + 1}</h3>
-                ${team.map((player, playerIndex) => `
-                  <div class="arena-mem arena-profile">
+                ${team.length === 0 ? `<div class="empty-message" style="padding:22px;">비어 있음</div>` : team.map((player, playerIndex) => `
+                  <div class="arena-mem arena-profile" draggable="true" data-arena-team="${teamIndex}" data-arena-index="${playerIndex}">
                     <div class="arena-pick-slot">${player.champion ? `<img src="${getChampionImage(player.champion)}" onerror="this.style.display='none'; this.parentElement.textContent='?';" class="arena-champion-img" alt="${escapeHtml(player.champion)}">` : `?`}</div>
                     <div class="arena-profile-info">
                       <span class="a-name">${escapeHtml(player.nickname)}</span>
@@ -4398,6 +4568,94 @@ function makeTeams() {
           <div class="difference-box">⚖️ 최고/최저 팀 평균 차이: ${diff.toFixed(1)} 점</div>
           <div class="drag-guide">팀 셔플은 티어 점수를 기준으로 최대한 균형 있게 나눕니다. 3명 미만 팀도 표시되며, 이후 직접 조정할 수 있습니다.</div>
         </div>`;
+      setupArenaDrag();
+    }
+
+    function clearArenaDragMark() {
+      document.querySelectorAll(".arena-mem").forEach(item => item.classList.remove("before", "after", "dragging"));
+      document.querySelectorAll(".arena-team-box").forEach(box => box.classList.remove("arena-drop-over"));
+    }
+
+    function setupArenaDrag() {
+      const rows = document.querySelectorAll(".arena-mem[data-arena-team]");
+      const boxes = document.querySelectorAll(".arena-team-box[data-arena-zone]");
+
+      rows.forEach(row => {
+        row.addEventListener("dragstart", event => {
+          dragTeam = row.dataset.arenaTeam;
+          dragIndex = Number(row.dataset.arenaIndex);
+          row.classList.add("dragging");
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", `${dragTeam}:${dragIndex}`);
+          }
+        });
+
+        row.addEventListener("dragover", event => {
+          event.preventDefault();
+          clearArenaDragMark();
+          const rect = row.getBoundingClientRect();
+          const isTop = event.clientY < rect.top + rect.height / 2;
+          targetTeam = row.dataset.arenaTeam;
+          targetIndex = Number(row.dataset.arenaIndex) + (isTop ? 0 : 1);
+          row.classList.add(isTop ? "before" : "after");
+          const box = row.closest(".arena-team-box");
+          if (box) box.classList.add("arena-drop-over");
+        });
+
+        row.addEventListener("drop", event => {
+          event.preventDefault();
+          event.stopPropagation();
+          moveArenaPlayer();
+        });
+
+        row.addEventListener("dragend", () => {
+          dragTeam = "";
+          dragIndex = null;
+          targetTeam = "";
+          targetIndex = null;
+          clearArenaDragMark();
+        });
+      });
+
+      boxes.forEach(box => {
+        box.addEventListener("dragover", event => {
+          event.preventDefault();
+          if (event.target.closest(".arena-mem")) return;
+          clearArenaDragMark();
+          targetTeam = box.dataset.arenaZone;
+          targetIndex = (arenaTeams[Number(targetTeam)] || []).length;
+          box.classList.add("arena-drop-over");
+        });
+
+        box.addEventListener("drop", event => {
+          event.preventDefault();
+          moveArenaPlayer();
+        });
+      });
+    }
+
+    function moveArenaPlayer() {
+      const fromTeamIndex = Number(dragTeam);
+      const toTeamIndex = Number(targetTeam);
+      if (!Number.isInteger(fromTeamIndex) || !Number.isInteger(toTeamIndex) || dragIndex === null || targetIndex === null) return;
+      if (!arenaTeams[fromTeamIndex] || !arenaTeams[toTeamIndex]) return;
+
+      const fromTeam = arenaTeams[fromTeamIndex];
+      const toTeam = arenaTeams[toTeamIndex];
+      const player = fromTeam.splice(dragIndex, 1)[0];
+      if (!player) return;
+
+      if (fromTeamIndex === toTeamIndex && dragIndex < targetIndex) targetIndex -= 1;
+      targetIndex = Math.max(0, Math.min(targetIndex, toTeam.length));
+      toTeam.splice(targetIndex, 0, player);
+
+      dragTeam = "";
+      dragIndex = null;
+      targetTeam = "";
+      targetIndex = null;
+      renderArenaTeams(arenaTeams);
+      saveData();
     }
 
     function updateArenaPlayerField(teamIndex, playerIndex, field, value) {
@@ -4494,15 +4752,40 @@ function makeTeams() {
       return available[Math.floor(Math.random() * available.length)];
     }
 
+    function setDraftStartButtonState() {
+      const btn = document.getElementById("draftStartButton");
+      if (!btn) return;
+
+      if (currentDraftStep >= draftSequence.length) {
+        btn.disabled = false;
+        btn.classList.remove("disabled");
+        btn.textContent = "다시 시작";
+        return;
+      }
+
+      btn.disabled = draftStarted;
+      btn.classList.toggle("disabled", draftStarted);
+      btn.textContent = draftStarted ? "진행 중" : "밴픽 시작";
+    }
+
+    function startDraftInfo() {
+      if (currentDraftStep >= draftSequence.length) {
+        resetDraftState(false);
+      }
+      draftStarted = true;
+      initDraftCenterGrid();
+      saveData();
+    }
+
     function setNoBanButtonState() {
       const btn = document.getElementById("draftNoBanButton");
       if (!btn) return;
 
-      if (currentDraftStep >= draftSequence.length) {
+      if (!draftStarted || currentDraftStep >= draftSequence.length) {
         btn.disabled = true;
         btn.classList.add("disabled");
         btn.textContent = "노밴";
-        btn.title = "밴픽이 완료되었습니다.";
+        btn.title = draftStarted ? "밴픽이 완료되었습니다." : "밴픽 시작 후 사용할 수 있습니다.";
         return;
       }
 
@@ -4511,10 +4794,11 @@ function makeTeams() {
       btn.disabled = !canNoBan;
       btn.classList.toggle("disabled", !canNoBan);
       btn.textContent = "노밴";
-      btn.title = canNoBan ? "밴하지 않고 다음 차례로 넘어갑니다." : "픽 차례에는 시간이 끝나면 자동으로 랜덤 픽됩니다.";
+      btn.title = canNoBan ? "밴하지 않고 다음 차례로 넘어갑니다." : "픽 차례에는 사용할 수 없습니다.";
     }
 
     function handleDraftTimeout() {
+      if (!draftStarted) return;
       if (!isDraftTabActive()) {
         stopDraftTimer(false);
         return;
@@ -4680,7 +4964,7 @@ function makeTeams() {
     function restartDraftTimer() {
       stopDraftTimer(false);
 
-      if (!isDraftTabActive()) return;
+      if (!draftStarted || !isDraftTabActive()) return;
 
       if (currentDraftStep >= draftSequence.length) {
         stopDraftTimer(true);
@@ -4796,6 +5080,7 @@ function makeTeams() {
     }
 
     function selectChampionForCurrentDraft(champ, isAuto = false) {
+      if (!draftStarted) return;
       if (currentDraftStep >= draftSequence.length) {
         return;
       }
@@ -4825,6 +5110,7 @@ function makeTeams() {
     }
 
     function noBanDraftTurn(isAuto = false) {
+      if (!draftStarted) return;
       if (currentDraftStep >= draftSequence.length) return;
 
       const currentStepInfo = draftSequence[currentDraftStep];
@@ -5271,6 +5557,23 @@ function makeTeams() {
         }
       }
 
+      if (!draftStarted) {
+        setDraftTurnTheme(null);
+        stopDraftTimer(false);
+        const phaseText = document.getElementById("draftPhaseText");
+        const statusText = document.getElementById("draftStatusText");
+        if (phaseText) phaseText.textContent = "밴픽 시작 대기 중";
+        if (statusText) {
+          statusText.classList.remove("complete");
+          statusText.textContent = "밴픽 시작을 누르면 진행됩니다.";
+        }
+        setDraftStartButtonState();
+        setNoBanButtonState();
+        setDraftSaveButtonState();
+        setupDraftPickDragReorder();
+        return;
+      }
+
       if (currentDraftStep < draftSequence.length) {
         const nextInfo = draftSequence[currentDraftStep];
         setDraftTurnTheme(nextInfo.team);
@@ -5283,6 +5586,7 @@ function makeTeams() {
         const targetEl = document.getElementById(targetElementId);
         if (targetEl) targetEl.classList.add("active");
 
+        setDraftStartButtonState();
         setNoBanButtonState();
         setDraftSaveButtonState();
         restartDraftTimer();
@@ -5293,6 +5597,7 @@ function makeTeams() {
         const statusText = document.getElementById("draftStatusText");
         statusText.textContent = "FINAL LOCK-IN · BLUE SIDE vs RED SIDE";
         statusText.classList.add("complete");
+        setDraftStartButtonState();
         setNoBanButtonState();
         setDraftSaveButtonState();
       }
